@@ -4,34 +4,37 @@ import numpy as np
 import cv2
 import math
 import matplotlib.pyplot as plt
-#-----------------------------#
-#   计算原始输入图像
-#   每一次缩放的比例
-#-----------------------------#
-def calculateScales(img):
-    copy_img = img.copy()
 
-    pr_scale = 1.0
-    h,w,_ = copy_img.shape
+#计算原始输入图像每一次缩放的比例（构建图像金字塔）
+def calculateScales(img):   #img为传入的图像
+    copy_img = img.copy()   #复制图像
+    pr_scale = 1.0  #初始缩放比例，若未缩放则为1
+    h,w,_ = copy_img.shape  #获得图像的高和宽
 
+    #开始进行缩放防止输入到Pnet的图像过大或者过小
     if min(w,h)>500:
-        pr_scale = 500.0/min(h,w)
-        w = int(w*pr_scale)
-        h = int(h*pr_scale)
+        #当宽和高最小值大于100的时候将大小缩小到500上
+        pr_scale = 500.0/min(h,w)   #缩小比例
+        w = int(w*pr_scale) #缩小后的的宽
+        h = int(h*pr_scale) #缩小后的高
     elif max(w,h)<500:
-        pr_scale = 500.0/max(h,w)
-        w = int(w*pr_scale)
-        h = int(h*pr_scale)
+        #当宽和高最大值小于500的时候将大小放大到500上
+        pr_scale = 500.0/max(h,w)   #放大比例
+        w = int(w*pr_scale) #放大后的宽
+        h = int(h*pr_scale) #放大后的高
 
-    scales = []
-    factor = 0.709
-    factor_count = 0
-    minl = min(h,w)
-    while minl >= 12:
+    scales = [] #建立scales的空列表存放图像金字塔的缩放比例
+    factor = 0.709  #缩放因子(固定值)
+    factor_count = 0    #缩放次数
+    minl = min(h,w) #高和宽中较小值
+    while minl >= 12:   #一直使用缩放因子进行缩放直到当最小值小于12的时候退出循环
+        #第一次缩放是在上面缩放到500，若原图为700*1000的，那么pr_scale=500/700
+        #scales的第一个值也就是(500/700)*(0.709^0)=500/700
+        #以后的每次缩放使用缩放因子进行缩放,那么缩放比例就是scales[i]=(500/700)*(0.709^i),i从0开始计数数值上等于factor_count
         scales.append(pr_scale*pow(factor, factor_count))
-        minl *= factor
-        factor_count += 1
-    return scales
+        minl *= factor  #缩放后的最小值
+        factor_count += 1   #缩放次数加一
+    return scales   #返回缩放比例的列表
 
 #-------------------------------------#
 #   对pnet处理后的结果进行处理
