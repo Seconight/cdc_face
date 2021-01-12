@@ -114,6 +114,7 @@ class mtcnn():
         self.Rnet = create_Rnet('model_data/rnet.h5')
         self.Onet = create_Onet('model_data/onet.h5')
 
+
     #使用MTCNN进行人脸检测
     def detectFace(self, img, threshold):   #img为输入图片
         #进行图像归一化
@@ -124,6 +125,7 @@ class mtcnn():
         scales = utils.calculateScales(img) #获得图像金字塔缩放比例列表
         out = []    #用来存放Pnet输出的列表
 
+        #---------------------------------------------------------------#
         #Pnet网络粗略计算人脸框
         #将图像金字塔里的图片输入Pnet获得每一张图片人脸检测的初步特征提取效果
         for scale in scales:
@@ -143,7 +145,7 @@ class mtcnn():
 
         #遍历Pnet输出并解码得到原始图像中的矩形框位置
         for i in range(image_num):
-            cls_prob = out[i][0][0][:,:,1]  #不知道这一步在干啥，有知道的写一下
+            cls_prob = out[i][0][0][:,:,1]  #不知道这一步在干啥，有知道的写一下！！！好像是置信度
             roi = out[i][1][0]  #取出其对应的框的位置
             out_h, out_w = cls_prob.shape   #取出每个缩放后图片的高和宽
             out_side = max(out_h, out_w)    #取高和宽中较大者
@@ -151,56 +153,47 @@ class mtcnn():
             rectangle = utils.detect_face_12net(cls_prob, roi, out_side, 1 / scales[i], origin_w, origin_h, threshold[0])
             rectangles.extend(rectangle)
             
-        # for i in range(len(rectangles)):
-        #     bbox = rectangles[i]
-        #     crop_img = img[int(bbox[1]):int(bbox[3]),int(bbox[0]):int(bbox[2])]
-        #     if bbox[3]-bbox[1]>80:
-        #         cv2.imshow("crop_img",crop_img)
-        #         cv2.waitKey(0)
         # 进行非极大抑制
         rectangles = utils.NMS(rectangles, 0.7)
 
         if len(rectangles) == 0:
             return rectangles
 
-        #-----------------------------#
-        #   稍微精确计算人脸框
-        #   Rnet部分
-        #-----------------------------#
-        predict_24_batch = []
+        #---------------------------------------------------------------#
+        #Rnet部分稍微精确计算人脸框
+        predict_24_batch = []   #用于保存Rnet输入的img列表
         for rectangle in rectangles:
-            crop_img = copy_img[int(rectangle[1]):int(rectangle[3]), int(rectangle[0]):int(rectangle[2])]
-            scale_img = cv2.resize(crop_img, (24, 24))
-            predict_24_batch.append(scale_img)
+            crop_img = copy_img[int(rectangle[1]):int(rectangle[3]), int(rectangle[0]):int(rectangle[2])]   #从原图中截取Pnet产生的矩形框
+            scale_img = cv2.resize(crop_img, (24, 24))  #缩放到24*24，这是Rnet网络的输入要求
+            predict_24_batch.append(scale_img)  #将缩放后的图像保存到Rnet输入列表里
 
-        predict_24_batch = np.array(predict_24_batch)
-        out = self.Rnet.predict(predict_24_batch)
-        # 可信度
+        predict_24_batch = np.array(predict_24_batch)   #用输入列表初始化一个数组
+        out = self.Rnet.predict(predict_24_batch)   #输入Rnet进行预测得到输出
+        #图片中有没有人脸的可信度
         cls_prob = out[0]
         cls_prob = np.array(cls_prob)
-        # 如何调整某一张图片对应的rectangle
+        #如何调整某一张图片对应的rectangle
         roi_prob = out[1]
         roi_prob = np.array(roi_prob)
+        #解码
         rectangles = utils.filter_face_24net(cls_prob, roi_prob, rectangles, origin_w, origin_h, threshold[1])
         if len(rectangles) == 0:
             return rectangles
 
-        #-----------------------------#
-        #   计算人脸框
-        #   onet部分
-        #-----------------------------#
-        predict_batch = []
+        #---------------------------------------------------------------#
+        #Onet部分精确计算人脸框
+        predict_batch = []  #用于保存Onet输入的img列表
         for rectangle in rectangles:
-            crop_img = copy_img[int(rectangle[1]):int(rectangle[3]), int(rectangle[0]):int(rectangle[2])]
-            scale_img = cv2.resize(crop_img, (48, 48))
-            predict_batch.append(scale_img)
+            crop_img = copy_img[int(rectangle[1]):int(rectangle[3]), int(rectangle[0]):int(rectangle[2])]   #从原图中截取Rnet产生的矩形框
+            scale_img = cv2.resize(crop_img, (48, 48))  #缩放到48*48，这是Onet网络的输入要求
+            predict_batch.append(scale_img)  #将缩放后的图像保存到Onet输入列表里
 
-        predict_batch = np.array(predict_batch)
-        output = self.Onet.predict(predict_batch)
-        cls_prob = output[0]
-        roi_prob = output[1]
-        pts_prob = output[2]
-
+        predict_batch = np.array(predict_batch) #用输入列表初始化一个数组
+        output = self.Onet.predict(predict_batch)   #输入Onet进行预测得到输出
+        cls_prob = output[0]    #置信度
+        roi_prob = output[1]    #调整方式
+        pts_prob = output[2]    #人脸的五个特征点
+        #筛选
         rectangles = utils.filter_face_48net(cls_prob, roi_prob, pts_prob, rectangles, origin_w, origin_h, threshold[2])
         return rectangles
 
