@@ -108,47 +108,46 @@ def create_Onet(weight_path):
     return model
 
 class mtcnn():
+    #初始化函数，加载三个网络模型
     def __init__(self):
         self.Pnet = create_Pnet('model_data/pnet.h5')
         self.Rnet = create_Rnet('model_data/rnet.h5')
         self.Onet = create_Onet('model_data/onet.h5')
 
-    def detectFace(self, img, threshold):
-        #-----------------------------#
-        #   归一化
-        #-----------------------------#
-        copy_img = (img.copy() - 127.5) / 127.5
-        origin_h, origin_w, _ = copy_img.shape
+    #使用MTCNN进行人脸检测
+    def detectFace(self, img, threshold):   #img为输入图片
+        #进行图像归一化
+        copy_img = (img.copy() - 127.5) / 127.5 #归一化操作
+        origin_h, origin_w, _ = copy_img.shape  #获得归一化后的图像高和宽
 
-        #-----------------------------#
-        #   计算原始输入图像
-        #   每一次缩放的比例
-        #-----------------------------#
-        scales = utils.calculateScales(img)
-        out = []
-        #-----------------------------#
-        #   粗略计算人脸框
-        #   pnet部分
-        #-----------------------------#
+        #计算原始输入图像每一次缩放的比例
+        scales = utils.calculateScales(img) #获得图像金字塔缩放比例列表
+        out = []    #用来存放Pnet输出的列表
+
+        #Pnet网络粗略计算人脸框
+        #将图像金字塔里的图片输入Pnet获得每一张图片人脸检测的初步特征提取效果
         for scale in scales:
-            hs = int(origin_h * scale)
-            ws = int(origin_w * scale)
-            scale_img = cv2.resize(copy_img, (ws, hs))
-            inputs = scale_img.reshape(1, *scale_img.shape)
-            ouput = self.Pnet.predict(inputs)
-            out.append(ouput)
+            hs = int(origin_h * scale)  #将原始图像的高*缩放比例得到缩放后的高
+            ws = int(origin_w * scale)  #将原始图像的宽*缩放比例得到缩放后的宽
+            scale_img = cv2.resize(copy_img, (ws, hs))  #使用缩放后的宽和高进行缩放
+            inputs = scale_img.reshape(1, *scale_img.shape) #第一个参数1表示将原图像通道数变为1，
+                                                            #第二个参数表示矩阵行数
+                                                            #这里的scale_img.shape返回的是一个表示图像矩阵的元组
+                                                            #第一个参数为矩阵行数，第二个为矩阵列数，第三个为通道数
+                                                            #这里*scale_img.shape表示reshape后矩阵的行数列数不变
+            ouput = self.Pnet.predict(inputs)   #将reshape后的图像输入Pnet得到输出
+            out.append(ouput)   #将输出结果添加到out列表
 
-        image_num = len(scales)
-        rectangles = []
+        image_num = len(scales) #图像金字塔图像数
+        rectangles = [] #存放Pnet检测到的矩形框在原始图像中的矩形框位置的列表
+
+        #遍历Pnet输出并解码得到原始图像中的矩形框位置
         for i in range(image_num):
-            # 有人脸的概率
-            cls_prob = out[i][0][0][:,:,1]
-            # 其对应的框的位置
-            roi = out[i][1][0]
-            # 取出每个缩放后图片的长宽
-            out_h, out_w = cls_prob.shape
-            out_side = max(out_h, out_w)
-            # 解码过程
+            cls_prob = out[i][0][0][:,:,1]  #取出每个网格有人脸的概率
+            roi = out[i][1][0]  #取出其对应的框的位置
+            out_h, out_w = cls_prob.shape   #取出每个缩放后图片的高和宽
+            out_side = max(out_h, out_w)    #取高和宽中较大者
+            #解码过程
             rectangle = utils.detect_face_12net(cls_prob, roi, out_side, 1 / scales[i], origin_w, origin_h, threshold[0])
             rectangles.extend(rectangle)
             

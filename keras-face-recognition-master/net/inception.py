@@ -81,9 +81,9 @@ def _inception_resnet_block(x, scale, block_type, block_idx, activation='relu'):
         x = Activation(activation, name=name_fmt('Activation'))(x)
     return x
 
-
-def InceptionResNetV1(input_shape=(160, 160, 3),
-                      classes=128,
+#关于InceptionV1的详解参考博客https://blog.csdn.net/julialove102123/article/details/79632721
+def InceptionResNetV1(input_shape=(160, 160, 3),    #输入图像大小160*160*3
+                      classes=128,  #128种类别
                       dropout_keep_prob=0.8):
     channel_axis = 3
     inputs = Input(shape=input_shape)

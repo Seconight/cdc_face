@@ -7,14 +7,10 @@ from net.inception import InceptionResNetV1
 
 class face_rec():
     def __init__(self):
-        # 创建mtcnn对象
-        # 检测图片中的人脸
-        self.mtcnn_model = mtcnn()
-        # 门限函数
-        self.threshold = [0.5,0.8,0.9]
+        self.mtcnn_model = mtcnn()  #创建mtcnn对象检测图片中的人脸
+        self.threshold = [0.5,0.8,0.9]  #门限函数                        作用还不知道
 
-        # 载入facenet
-        # 将检测到的人脸转化为128维的向量
+        #载入facenet将检测到的人脸转化为128维的向量
         self.facenet_model = InceptionResNetV1()
         # model.summary()
         model_path = './model_data/facenet_keras.h5'
@@ -122,6 +118,7 @@ class face_rec():
 if __name__ == "__main__":
 
     dududu = face_rec()
+    #此处被注释代码不要删除
     # video_capture = cv2.VideoCapture(0)
 
     # while True:

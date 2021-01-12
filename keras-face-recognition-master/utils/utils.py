@@ -36,28 +36,26 @@ def calculateScales(img):   #img为传入的图像
         factor_count += 1   #缩放次数加一
     return scales   #返回缩放比例的列表
 
-#-------------------------------------#
-#   对pnet处理后的结果进行处理
-#-------------------------------------#
+
+#对pnet处理后的结果进行处理
 def detect_face_12net(cls_prob,roi,out_side,scale,width,height,threshold):
+    #原始权重是caffe上训练的，yx轴是交换的，这里将y和x进行转换
     cls_prob = np.swapaxes(cls_prob, 0, 1)
     roi = np.swapaxes(roi, 0, 2)
 
-    stride = 0
-    # stride略等于2
+    stride = 0  #Pnet会对图像进行压缩，stride表示图像的压缩比例
+    #stride略等于2
     if out_side != 1:
         stride = float(2*out_side-1)/(out_side-1)
-    (x,y) = np.where(cls_prob>=threshold)
+    (x,y) = np.where(cls_prob>=threshold)   #取出大于门限的网格点
 
     boundingbox = np.array([x,y]).T
-    # 找到对应原图的位置
-    bb1 = np.fix((stride * (boundingbox) + 0 ) * scale)
-    bb2 = np.fix((stride * (boundingbox) + 11) * scale)
-    # plt.scatter(bb1[:,0],bb1[:,1],linewidths=1)
-    # plt.scatter(bb2[:,0],bb2[:,1],linewidths=1,c='r')
-    # plt.show()
+    #找到对应原图的位置，将在缩放后的图像上检测到的网格映射到输入Pnet的图像上（通过stride），并进一步映射到原图上（通过scale）
+    bb1 = np.fix((stride * (boundingbox) + 0 ) * scale) #左上角
+    bb2 = np.fix((stride * (boundingbox) + 11) * scale) #右下角
     boundingbox = np.concatenate((bb1,bb2),axis = 1)
     
+    #dx1，dx2为左上角网格偏移坐标；dx3，dx4为右下角网格偏移坐标
     dx1 = roi[0][x,y]
     dx2 = roi[1][x,y]
     dx3 = roi[2][x,y]
@@ -71,6 +69,7 @@ def detect_face_12net(cls_prob,roi,out_side,scale,width,height,threshold):
 
     rectangles = rect2square(rectangles)
     pick = []
+    #对坐标进行限制不能超出图片范围
     for i in range(len(rectangles)):
         x1 = int(max(0     ,rectangles[i][0]))
         y1 = int(max(0     ,rectangles[i][1]))
@@ -79,7 +78,7 @@ def detect_face_12net(cls_prob,roi,out_side,scale,width,height,threshold):
         sc = rectangles[i][4]
         if x2>x1 and y2>y1:
             pick.append([x1,y1,x2,y2,sc])
-    return NMS(pick,0.3)
+    return NMS(pick,0.3)    #进行非极大值抑制剔除掉重合率较高的框
 #-----------------------------#
 #   将长方形调整为正方形
 #-----------------------------#
