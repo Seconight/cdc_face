@@ -47,7 +47,7 @@ def detect_face_12net(cls_prob,roi,out_side,scale,width,height,threshold):
     #stride略等于2
     if out_side != 1:
         stride = float(2*out_side-1)/(out_side-1)
-    (x,y) = np.where(cls_prob>=threshold)   #取出大于门限的网格点
+    (x,y) = np.where(cls_prob>=threshold)   #取出大于门限的网格点表示人脸存在可能性大的网格
 
     boundingbox = np.array([x,y]).T
     #找到对应原图的位置，将在缩放后的图像上检测到的网格映射到输入Pnet的图像上（通过stride），并进一步映射到原图上（通过scale）
@@ -55,6 +55,7 @@ def detect_face_12net(cls_prob,roi,out_side,scale,width,height,threshold):
     bb2 = np.fix((stride * (boundingbox) + 11) * scale) #右下角
     boundingbox = np.concatenate((bb1,bb2),axis = 1)
     
+    #这一部分看不懂有知道的写一下
     #dx1，dx2为左上角网格偏移坐标；dx3，dx4为右下角网格偏移坐标
     dx1 = roi[0][x,y]
     dx2 = roi[1][x,y]
@@ -62,9 +63,7 @@ def detect_face_12net(cls_prob,roi,out_side,scale,width,height,threshold):
     dx4 = roi[3][x,y]
     score = np.array([cls_prob[x,y]]).T
     offset = np.array([dx1,dx2,dx3,dx4]).T
-
     boundingbox = boundingbox + offset*12.0*scale
-    
     rectangles = np.concatenate((boundingbox,score),axis=1)
 
     rectangles = rect2square(rectangles)

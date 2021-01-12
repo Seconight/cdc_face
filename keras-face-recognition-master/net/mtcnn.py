@@ -143,7 +143,7 @@ class mtcnn():
 
         #遍历Pnet输出并解码得到原始图像中的矩形框位置
         for i in range(image_num):
-            cls_prob = out[i][0][0][:,:,1]  #取出每个网格有人脸的概率
+            cls_prob = out[i][0][0][:,:,1]  #不知道这一步在干啥，有知道的写一下
             roi = out[i][1][0]  #取出其对应的框的位置
             out_h, out_w = cls_prob.shape   #取出每个缩放后图片的高和宽
             out_side = max(out_h, out_w)    #取高和宽中较大者
