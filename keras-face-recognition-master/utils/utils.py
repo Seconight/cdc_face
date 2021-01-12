@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 import math
 import matplotlib.pyplot as plt
-
+#test
 #计算原始输入图像每一次缩放的比例（构建图像金字塔）
 def calculateScales(img):   #img为传入的图像
     copy_img = img.copy()   #复制图像
