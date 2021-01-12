@@ -89,32 +89,38 @@ def rect2square(rectangles):
     rectangles[:,1] = rectangles[:,1] + h*0.5 - l*0.5 
     rectangles[:,2:4] = rectangles[:,0:2] + np.repeat([l], 2, axis = 0).T 
     return rectangles
-#-------------------------------------#
-#   非极大抑制
-#-------------------------------------#
+
+#非极大抑制剔除掉重合率较高的框
 def NMS(rectangles,threshold):
     if len(rectangles)==0:
         return rectangles
-    boxes = np.array(rectangles)
-    x1 = boxes[:,0]
+    boxes = np.array(rectangles)    #将矩形序列创建为数组形式
+    #取出左上右下两个点坐标
+    x1 = boxes[:,0] #取boxes每个元素的第一项
     y1 = boxes[:,1]
     x2 = boxes[:,2]
     y2 = boxes[:,3]
-    s  = boxes[:,4]
-    area = np.multiply(x2-x1+1, y2-y1+1)
-    I = np.array(s.argsort())
+    s  = boxes[:,4] #得分
+    area = np.multiply(x2-x1+1, y2-y1+1)    #计算矩形区域面积
+    I = np.array(s.argsort())   #对得分进行升序排序
     pick = []
     while len(I)>0:
-        xx1 = np.maximum(x1[I[-1]], x1[I[0:-1]]) #I[-1] have hightest prob score, I[0:-1]->others
+        #得到相交区域
+        xx1 = np.maximum(x1[I[-1]], x1[I[0:-1]]) #I[-1]表示I的倒数第一个元素的内容 拥有最高得分, I[0:-1]->othersI的第一个到倒数第二个
         yy1 = np.maximum(y1[I[-1]], y1[I[0:-1]])
         xx2 = np.minimum(x2[I[-1]], x2[I[0:-1]])
         yy2 = np.minimum(y2[I[-1]], y2[I[0:-1]])
-        w = np.maximum(0.0, xx2 - xx1 + 1)
+        #计算相交区域的面积，不重叠时面积为0
+        w = np.maximum(0.0, xx2 - xx1 + 1)  
         h = np.maximum(0.0, yy2 - yy1 + 1)
-        inter = w * h
+        inter = w * h 
+        #计算IoU：重叠面积/（面积1+面积2-重叠面积）
         o = inter / (area[I[-1]] + area[I[0:-1]] - inter)
+        #保留得分最高的Box
         pick.append(I[-1])
+        #保留IoU小于阈值的Box
         I = I[np.where(o<=threshold)[0]]
+    #返回结果
     result_rectangle = boxes[pick].tolist()
     return result_rectangle
 
