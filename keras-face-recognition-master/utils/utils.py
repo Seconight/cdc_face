@@ -83,8 +83,8 @@ def detect_face_12net(cls_prob,roi,out_side,scale,width,height,threshold):
 
 #将长方形调整为正方形
 def rect2square(rectangles):
-    w = rectangles[:,2] - rectangles[:,0]
-    h = rectangles[:,3] - rectangles[:,1]
+    w = rectangles[:,2] - rectangles[:,0]   #求出矩形宽
+    h = rectangles[:,3] - rectangles[:,1]   #求出矩形高
     l = np.maximum(w,h).T
     rectangles[:,0] = rectangles[:,0] + w*0.5 - l*0.5
     rectangles[:,1] = rectangles[:,1] + h*0.5 - l*0.5 
@@ -230,9 +230,8 @@ def filter_face_48net(cls_prob,roi,pts,rectangles,width,height,threshold):
                  rectangles[i][5],rectangles[i][6],rectangles[i][7],rectangles[i][8],rectangles[i][9],rectangles[i][10],rectangles[i][11],rectangles[i][12],rectangles[i][13],rectangles[i][14]])
     return NMS(pick,0.3)    #非极大值抑制
 
-#-------------------------------------#
-#   人脸对齐
-#-------------------------------------#
+
+#人脸对齐
 def Alignment_1(img,landmark):
 
     if landmark.shape[0]==68:
@@ -298,14 +297,13 @@ def Alignment_2(img,std_landmark,landmark):
         new_landmark.append(pts)
 
     new_landmark = np.array(new_landmark)
-
     return new_img, new_landmark
 
-#---------------------------------#
-#   图片预处理
-#   高斯归一化
-#---------------------------------#
+
+#图片预处理高斯归一化
+#归一化讲解见https://blog.csdn.net/program_developer/article/details/78637711
 def pre_process(x):
+    #这里在干什么我不知道！！！
     if x.ndim == 4:
         axis = (1, 2, 3)
         size = x[0].size
@@ -315,38 +313,38 @@ def pre_process(x):
     else:
         raise ValueError('Dimension should be 3 or 4')
 
-    mean = np.mean(x, axis=axis, keepdims=True)
-    std = np.std(x, axis=axis, keepdims=True)
+    mean = np.mean(x, axis=axis, keepdims=True) #求平均值
+    std = np.std(x, axis=axis, keepdims=True)   #求标准差
     std_adj = np.maximum(std, 1.0/np.sqrt(size))
-    y = (x - mean) / std_adj
+    y = (x - mean) / std_adj    #归一化
     return y
-#---------------------------------#
-#   l2标准化
-#---------------------------------#
+
+
+#L2标准化
+#公式见https://blog.csdn.net/ningyanggege/article/details/82840233
 def l2_normalize(x, axis=-1, epsilon=1e-10):
     output = x / np.sqrt(np.maximum(np.sum(np.square(x), axis=axis, keepdims=True), epsilon))
     return output
-#---------------------------------#
-#   计算128特征值
-#---------------------------------#
+
+
+
+#计算128特征值
 def calc_128_vec(model,img):
-    face_img = pre_process(img)
-    pre = model.predict(face_img)
-    pre = l2_normalize(np.concatenate(pre))
-    pre = np.reshape(pre,[128])
+    face_img = pre_process(img) #高斯归一化处理
+    pre = model.predict(face_img)   #进行预测
+    pre = l2_normalize(np.concatenate(pre)) #把预测的结果堆叠并进行L2标准化
+    pre = np.reshape(pre,[128]) #将输入矩阵变为128行的矩阵
     return pre
 
-#---------------------------------#
-#   计算人脸距离
-#---------------------------------#
+
+#计算人脸距离
 def face_distance(face_encodings, face_to_compare):
     if len(face_encodings) == 0:
         return np.empty((0))
-    return np.linalg.norm(face_encodings - face_to_compare, axis=1)
+    return np.linalg.norm(face_encodings - face_to_compare, axis=1) #对矩阵的每一行求L2范数
+                     #norm函数详解见https://blog.csdn.net/cjhxydream/article/details/108192497
 
-#---------------------------------#
-#   比较人脸
-#---------------------------------#
+#比较人脸
 def compare_faces(known_face_encodings, face_encoding_to_check, tolerance=0.6):
     dis = face_distance(known_face_encodings, face_encoding_to_check) 
     return list(dis <= tolerance)
