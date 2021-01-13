@@ -5,105 +5,110 @@ import tensorflow as tf
 import numpy as np 
 import utils.utils as utils
 import cv2
-#-----------------------------#
-#   粗略获取人脸框
-#   输出bbox位置和是否有人脸
-#-----------------------------#
+
+#Pnet粗略获取人脸框
+#输出bbox位置和是否有人脸的置信度
+#模型参考https://baijiahao.baidu.com/s?id=1644934945515389890&wfr=spider&for=pc
 def create_Pnet(weight_path):
-    # h,w
-    input = Input(shape=[None, None, 3])
+    #图像大小12*12*3
+    input = Input(shape=[None, None, 3])    #创建3通道的模型输入
 
-    # h,w,3 -> h/2,w/2,10
-    x = Conv2D(10, (3, 3), strides=1, padding='valid', name='conv1')(input)
-    x = PReLU(shared_axes=[1,2],name='PReLU1')(x)
-    x = MaxPool2D(pool_size=2)(x)
+    #12*12*3->10*10*10
+    x = Conv2D(10,        (3, 3),      strides=1, padding='valid',   name='conv1')(input) #用10个3*3的卷积核进行卷积，步长为1
+              #卷积核个数  #卷积核大小  #步长       #卷积后不进行填充
+    #Conv2D函数详解见https://blog.csdn.net/koala_cola/article/details/106883961
+    x = PReLU(shared_axes=[1,2],name='PReLU1')(x)   #激活函数
+    #10*10*10->5*5*10
+    x = MaxPool2D(pool_size=2)(x)   #最大池化
 
-    # h/2,w/2,10 -> h/2,w/2,16
-    x = Conv2D(16, (3, 3), strides=1, padding='valid', name='conv2')(x)
-    x = PReLU(shared_axes=[1,2],name='PReLU2')(x)
-    # h/2,w/2,32
-    x = Conv2D(32, (3, 3), strides=1, padding='valid', name='conv3')(x)
-    x = PReLU(shared_axes=[1,2],name='PReLU3')(x)
+    #5*5*10->3*3*16
+    x = Conv2D(16, (3, 3), strides=1, padding='valid', name='conv2')(x) #用16个3*3的卷积核进行卷积，步长为1
+    x = PReLU(shared_axes=[1,2],name='PReLU2')(x)   #激活函数
+    #3*3*16->1*1*32
+    x = Conv2D(32, (3, 3), strides=1, padding='valid', name='conv3')(x) #用32个3*3的卷积核进行卷积，步长为1
+    x = PReLU(shared_axes=[1,2],name='PReLU3')(x)   #激活函数
 
-    # h/2, w/2, 2
-    classifier = Conv2D(2, (1, 1), activation='softmax', name='conv4-1')(x)
-    # 无激活函数，线性。
-    # h/2, w/2, 4
-    bbox_regress = Conv2D(4, (1, 1), name='conv4-2')(x)
+    #1*1*32->1*1*2
+    classifier = Conv2D(2, (1, 1), activation='softmax', name='conv4-1')(x) #用2个1*1的卷积核进行卷积 #无激活函数，线性。得到人脸二分类
+    #1*1*32->1*1*4
+    bbox_regress = Conv2D(4, (1, 1), name='conv4-2')(x) #用4个1*1的卷积核进行卷积，得到预测框位置
 
-    model = Model([input], [classifier, bbox_regress])
-    model.load_weights(weight_path, by_name=True)
+    model = Model([input], [classifier, bbox_regress])  #创建keras模型输入为input，输出为[classifier, bbox_regress]
+    model.load_weights(weight_path, by_name=True)   #加载权重
     return model
 
-#-----------------------------#
-#   mtcnn的第二段
-#   精修框
-#-----------------------------#
-def create_Rnet(weight_path):
-    input = Input(shape=[24, 24, 3])
-    # 24,24,3 -> 11,11,28
-    x = Conv2D(28, (3, 3), strides=1, padding='valid', name='conv1')(input)
-    x = PReLU(shared_axes=[1, 2], name='prelu1')(x)
-    x = MaxPool2D(pool_size=3,strides=2, padding='same')(x)
 
-    # 11,11,28 -> 4,4,48
-    x = Conv2D(48, (3, 3), strides=1, padding='valid', name='conv2')(x)
-    x = PReLU(shared_axes=[1, 2], name='prelu2')(x)
-    x = MaxPool2D(pool_size=3, strides=2)(x)
+#mtcnn的第二段Rnet
+#精修框
+def create_Rnet(weight_path):
+    input = Input(shape=[24, 24, 3])    #输入大小为24*24*3
+    #24,24,3 -> 22,22,28
+    x = Conv2D(28, (3, 3), strides=1, padding='valid', name='conv1')(input) #用28个3*3的卷积核进行卷积，步长为1
+    x = PReLU(shared_axes=[1, 2], name='prelu1')(x) #激活函数
+    #22，22，28 -> 11,11,28
+    x = MaxPool2D(pool_size=3,strides=2, padding='same')(x) #最大池化
+
+    # 11,11,28 -> 9,9,48
+    x = Conv2D(48, (3, 3), strides=1, padding='valid', name='conv2')(x) #用48个3*3的卷积核进行卷积，步长为1
+    x = PReLU(shared_axes=[1, 2], name='prelu2')(x) #激活函数
+    #9,9,48->4,4,48
+    x = MaxPool2D(pool_size=3, strides=2)(x)    #最大池化
 
     # 4,4,48 -> 3,3,64
-    x = Conv2D(64, (2, 2), strides=1, padding='valid', name='conv3')(x)
-    x = PReLU(shared_axes=[1, 2], name='prelu3')(x)
-    # 3,3,64 -> 64,3,3
-    x = Permute((3, 2, 1))(x)
-    x = Flatten()(x)
-    # 576 -> 128
-    x = Dense(128, name='conv4')(x)
-    x = PReLU( name='prelu4')(x)
+    x = Conv2D(64, (2, 2), strides=1, padding='valid', name='conv3')(x) #用64个2*2的卷积核进行卷积，步长为1
+    x = PReLU(shared_axes=[1, 2], name='prelu3')(x) #激活函数
+    # 3,3,64 -> 64,3,3并展平
+    x = Permute((3, 2, 1))(x)   #将原来矩阵的3、3、64按3，2，1的顺序更换
+    x = Flatten()(x)    #展平
+
+    # 576 -> 128得到全连接层
+    x = Dense(128, name='conv4')(x) #输入x*y大小的矩阵，输出x*128大小的矩阵
+    x = PReLU( name='prelu4')(x)    #激活函数
     # 128 -> 2 128 -> 4
-    classifier = Dense(2, activation='softmax', name='conv5-1')(x)
-    bbox_regress = Dense(4, name='conv5-2')(x)
-    model = Model([input], [classifier, bbox_regress])
-    model.load_weights(weight_path, by_name=True)
+    classifier = Dense(2, activation='softmax', name='conv5-1')(x)  #人脸二分类，softmax为激活函数
+    bbox_regress = Dense(4, name='conv5-2')(x)  #预测框的位置
+    model = Model([input], [classifier, bbox_regress])  #创建keras模型输入为input，输出为[classifier, bbox_regress]
+    model.load_weights(weight_path, by_name=True)   #加载权重
     return model
 
-#-----------------------------#
-#   mtcnn的第三段
-#   精修框并获得五个点
-#-----------------------------#
+
+#mtcnn的第三段Onet
+#精修框并获得人脸五个点
 def create_Onet(weight_path):
     input = Input(shape = [48,48,3])
-    # 48,48,3 -> 23,23,32
-    x = Conv2D(32, (3, 3), strides=1, padding='valid', name='conv1')(input)
+    # 48,48,3 -> 46,46,32
+    x = Conv2D(32, (3, 3), strides=1, padding='valid', name='conv1')(input) #32个3*3卷积核
     x = PReLU(shared_axes=[1,2],name='prelu1')(x)
-    x = MaxPool2D(pool_size=3, strides=2, padding='same')(x)
-    # 23,23,32 -> 10,10,64
-    x = Conv2D(64, (3, 3), strides=1, padding='valid', name='conv2')(x)
+    # 46,46,32->23,23,32
+    x = MaxPool2D(pool_size=3, strides=2, padding='same')(x)    #最大池化
+    # 23,23,32 -> 21,21,64
+    x = Conv2D(64, (3, 3), strides=1, padding='valid', name='conv2')(x) #64个3*3卷积核
     x = PReLU(shared_axes=[1,2],name='prelu2')(x)
-    x = MaxPool2D(pool_size=3, strides=2)(x)
-    # 8,8,64 -> 4,4,64
-    x = Conv2D(64, (3, 3), strides=1, padding='valid', name='conv3')(x)
+    # 21,21,64->10,10,64
+    x = MaxPool2D(pool_size=3, strides=2)(x)    #最大池化
+    # 10,10,64 -> 8,8,64
+    x = Conv2D(64, (3, 3), strides=1, padding='valid', name='conv3')(x) #64个3*3卷积核
     x = PReLU(shared_axes=[1,2],name='prelu3')(x)
-    x = MaxPool2D(pool_size=2)(x)
+    # 8,8,64 -> 4,4,64
+    x = MaxPool2D(pool_size=2)(x)   #最大池化
     # 4,4,64 -> 3,3,128
-    x = Conv2D(128, (2, 2), strides=1, padding='valid', name='conv4')(x)
+    x = Conv2D(128, (2, 2), strides=1, padding='valid', name='conv4')(x)    #128个2*2卷积核
     x = PReLU(shared_axes=[1,2],name='prelu4')(x)
     # 3,3,128 -> 128,3,3
-    x = Permute((3,2,1))(x)
-
-    # 1152 -> 256
-    x = Flatten()(x)
-    x = Dense(256, name='conv5') (x)
+    x = Permute((3,2,1))(x) #维度置换
+    x = Flatten()(x)    #展平
+    # 1152 -> 256得到全连接层
+    x = Dense(256, name='conv5') (x)    #输入x*y大小的矩阵，输出x*256大小的矩阵
     x = PReLU(name='prelu5')(x)
 
     # 鉴别
     # 256 -> 2 256 -> 4 256 -> 10 
-    classifier = Dense(2, activation='softmax',name='conv6-1')(x)
-    bbox_regress = Dense(4,name='conv6-2')(x)
-    landmark_regress = Dense(10,name='conv6-3')(x)
+    classifier = Dense(2, activation='softmax',name='conv6-1')(x)   #人脸二分类，softmax为激活函数
+    bbox_regress = Dense(4,name='conv6-2')(x)   #预测框的位置
+    landmark_regress = Dense(10,name='conv6-3')(x)  #人脸五个关键点位置
 
-    model = Model([input], [classifier, bbox_regress, landmark_regress])
-    model.load_weights(weight_path, by_name=True)
+    model = Model([input], [classifier, bbox_regress, landmark_regress])    #创建keras模型输入为input，输出为[classifier, bbox_regress, landmark_regress]
+    model.load_weights(weight_path, by_name=True)   #加载权重
 
     return model
 
