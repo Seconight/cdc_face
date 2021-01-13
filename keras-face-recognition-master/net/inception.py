@@ -16,22 +16,26 @@ from keras import backend as K
 
 def scaling(x, scale):
     return x * scale
-
+#生成卷积层的名字
 def _generate_layer_name(name, branch_idx=None, prefix=None):
+    #prefix前缀为None返回None
     if prefix is None:
         return None
+    #branch_idx分支编号为None返回prefix_name
     if branch_idx is None:
         return '_'.join((prefix, name))
+    #返回完整卷积层名，由三部分组成prefix_Branch_idx_name
     return '_'.join((prefix, 'Branch', str(branch_idx), name))
 
 #与BN层合并的2维卷积层
 def conv2d_bn(x,filters,kernel_size,strides=1,padding='same',activation='relu',use_bias=False,name=None):
+    # 根据参数创建二维卷积层
     x = Conv2D(filters,#过滤器的个数
                kernel_size,#卷积核的数量
                strides=strides,#步长
                padding=padding,#“SAME”表示边界要填充，即给边界加上padding让卷积的输入和输出保持同样（SAME）尺寸；“VALID”表示边界不填充
                use_bias=use_bias,#是否使用偏置层（BN）
-               name=name)(x)#根据参数创建二维卷积层
+               name=name)(x)
     # 如果use_bias 为 True,追加BN层 ,默认都在激活函数前添加BN层
     if not use_bias:
         x = BatchNormalization(axis=3, momentum=0.995, epsilon=0.001,
