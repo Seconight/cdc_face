@@ -56,28 +56,28 @@ def _inception_resnet_block(x, scale, block_type, block_idx, activation='relu'):
     name_fmt = partial(_generate_layer_name, prefix=prefix)#固定_generate_layer_name函数的prefix为prefix，生成name_fmt函数
 
     if block_type == 'Block35':     #Inception-ResNet-A部分
-        # 一次1*1卷积
+        # 分支1:一次1*1卷积
         branch_0 = conv2d_bn(x, 32, 1, name=name_fmt('Conv2d_1x1', 0))
-        # 一次1*1卷积和一次3*3卷积
+        # 分支2:一次1*1卷积和一次3*3卷积
         branch_1 = conv2d_bn(x, 32, 1, name=name_fmt('Conv2d_0a_1x1', 1))
         branch_1 = conv2d_bn(branch_1, 32, 3, name=name_fmt('Conv2d_0b_3x3', 1))
-        # 一次1*1卷积和两次次3*3卷积
+        # 分支3:一次1*1卷积和两次次3*3卷积
         branch_2 = conv2d_bn(x, 32, 1, name=name_fmt('Conv2d_0a_1x1', 2))
         branch_2 = conv2d_bn(branch_2, 32, 3, name=name_fmt('Conv2d_0b_3x3', 2))
         branch_2 = conv2d_bn(branch_2, 32, 3, name=name_fmt('Conv2d_0c_3x3', 2))
         branches = [branch_0, branch_1, branch_2]   #组织在一个列表中
     elif block_type == 'Block17':   #Inception-ResNet-B部分
-        # 一次1*1卷积
+        # 分支1:一次1*1卷积
         branch_0 = conv2d_bn(x, 128, 1, name=name_fmt('Conv2d_1x1', 0))
-        # 一次1*1卷积,一次1*7卷积,一次7*1卷积
+        # 分支2:一次1*1卷积,一次1*7卷积,一次7*1卷积
         branch_1 = conv2d_bn(x, 128, 1, name=name_fmt('Conv2d_0a_1x1', 1))
         branch_1 = conv2d_bn(branch_1, 128, [1, 7], name=name_fmt('Conv2d_0b_1x7', 1))
         branch_1 = conv2d_bn(branch_1, 128, [7, 1], name=name_fmt('Conv2d_0c_7x1', 1))
         branches = [branch_0, branch_1] #组织在一个列表中
     elif block_type == 'Block8':    #Inception-ResNet-C部分
-        # 一次1*1卷积
+        # 分支1:一次1*1卷积
         branch_0 = conv2d_bn(x, 192, 1, name=name_fmt('Conv2d_1x1', 0))
-        # 一次1*1卷积,一次1*3卷积,一次3*1卷积
+        # 分支2:一次1*1卷积,一次1*3卷积,一次3*1卷积
         branch_1 = conv2d_bn(x, 192, 1, name=name_fmt('Conv2d_0a_1x1', 1))
         branch_1 = conv2d_bn(branch_1, 192, [1, 3], name=name_fmt('Conv2d_0b_1x3', 1))
         branch_1 = conv2d_bn(branch_1, 192, [3, 1], name=name_fmt('Conv2d_0c_3x1', 1))
@@ -85,11 +85,11 @@ def _inception_resnet_block(x, scale, block_type, block_idx, activation='relu'):
 
     mixed = Concatenate(axis=channel_axis, name=name_fmt('Concatenate'))(branches)  #利用列表的拼接完成卷积层堆叠
     up = conv2d_bn(mixed,K.int_shape(x)[channel_axis],1,activation=None,use_bias=True,
-                   name=name_fmt('Conv2d_1x1'))#设置1x1的卷积处理
+                   name=name_fmt('Conv2d_1x1'))#设置1x1的卷积处理（通道调整）
     up = Lambda(scaling,
                 output_shape=K.int_shape(up)[1:],
                 arguments={'scale': scale})(up)
-    x = add([x, up])#与未经处理的部分进行相加
+    x = add([x, up])#与未经处理的分支部分进行相加
     if activation is not None:#激活函数
         x = Activation(activation, name=name_fmt('Activation'))(x)
     return x
@@ -117,13 +117,13 @@ def InceptionResNetV1(input_shape=(160, 160, 3),    #输入图像大小160*160*3
 
     # Reduction-A 部分:   17,17,256 -> 8,8,896
     name_fmt = partial(_generate_layer_name, prefix='Mixed_6a') #固定_generate_layer_name函数的prefix为Mixed_6a，生成name_fmt函数
-    # 一次步长为2的384通道3x3的卷积
+    # 分支1：一次步长为2的384通道3x3的卷积
     branch_0 = conv2d_bn(x, 384, 3,strides=2,padding='valid',name=name_fmt('Conv2d_1a_3x3', 0)) #卷积层名：Mixed_6a_0_Conv2d_1a_3x3
-    # 一次192通道1x1的卷积，一次192通道3x3的卷积，一次256通道3x3的卷积
+    # 分支2：一次192通道1x1的卷积，一次192通道3x3的卷积，一次256通道3x3的卷积
     branch_1 = conv2d_bn(x, 192, 1, name=name_fmt('Conv2d_0a_1x1', 1))  #卷积层名：Mixed_6a_1_Conv2d_0a_1x1
     branch_1 = conv2d_bn(branch_1, 192, 3, name=name_fmt('Conv2d_0b_3x3', 1))   #卷积层名：Mixed_6a_1_Conv2d_0b_3x3
     branch_1 = conv2d_bn(branch_1,256,3,strides=2,padding='valid',name=name_fmt('Conv2d_1a_3x3', 1))    #卷积层名：Mixed_6a_1_Conv2d_1a_3x3
-    #一次步长为2 x 2的最大池化
+    # 分支3：一次步长为2的最大池化
     branch_pool = MaxPooling2D(3,strides=2,padding='valid',name=name_fmt('MaxPool_1a_3x3', 2))(x)
     #三个部分的卷积层堆叠
     branches = [branch_0, branch_1, branch_pool]
@@ -138,17 +138,17 @@ def InceptionResNetV1(input_shape=(160, 160, 3),    #输入图像大小160*160*3
 
     # Reduction-B部分 8,8,896 -> 3,3,1792
     name_fmt = partial(_generate_layer_name, prefix='Mixed_7a')#固定_generate_layer_name函数的prefix为Mixed_7a，生成name_fmt函数
-    # 一次256通道1x1的卷积，一次步长为2的384通道3x3的卷积
+    # 分支1：一次256通道1x1的卷积，一次步长为2的384通道3x3的卷积
     branch_0 = conv2d_bn(x, 256, 1, name=name_fmt('Conv2d_0a_1x1', 0))  #卷积层名：Mixed_7a_0_Conv2d_0a_1x1
     branch_0 = conv2d_bn(branch_0,384,3,strides=2,padding='valid',name=name_fmt('Conv2d_1a_3x3', 0))    #卷积层名：Mixed_7a_0_Conv2d_1a_3x3
-    # 一次256通道1x1的卷积，一次步长为2的384通道3x3的卷积
+    # 分支2：一次256通道1x1的卷积，一次步长为2的384通道3x3的卷积
     branch_1 = conv2d_bn(x, 256, 1, name=name_fmt('Conv2d_0a_1x1', 1))  #卷积层名：Mixed_7a_1_Conv2d_0a_1x1
     branch_1 = conv2d_bn(branch_1,256,3,strides=2,padding='valid',name=name_fmt('Conv2d_1a_3x3', 1))    #卷积层名：Mixed_7a_1_Conv2d_1a_3x3
-    # 一次256通道1x1的卷积，一次256通道3x3的卷积，一次步长为2的256通道3x3的卷积
+    # 分支3：一次256通道1x1的卷积，一次256通道3x3的卷积，一次步长为2的256通道3x3的卷积
     branch_2 = conv2d_bn(x, 256, 1, name=name_fmt('Conv2d_0a_1x1', 2))  #卷积层名：Mixed_7a_2_Conv2d_0a_1x1
     branch_2 = conv2d_bn(branch_2, 256, 3, name=name_fmt('Conv2d_0b_3x3', 2))   #卷积层名：Mixed_7a_2_Conv2d_0b_3x3
     branch_2 = conv2d_bn(branch_2,256,3,strides=2,padding='valid',name=name_fmt('Conv2d_1a_3x3', 2))    #卷积层名：Mixed_7a_2_Conv2d_1a_3x3
-    #一次步长为2 x 2的最大池化
+    # 分支4：一次步长为2的最大池化
     branch_pool = MaxPooling2D(3,strides=2,padding='valid',name=name_fmt('MaxPool_1a_3x3', 3))(x)   #卷积层名：Mixed_7a_3_MaxPool_1a_3x3
     #三个部分的卷积层堆叠
     branches = [branch_0, branch_1, branch_2, branch_pool]
@@ -163,13 +163,13 @@ def InceptionResNetV1(input_shape=(160, 160, 3),    #输入图像大小160*160*3
     x = _inception_resnet_block(x,scale=1.,activation=None,block_type='Block8',block_idx=6)
 
     # 平均池化
-    x = GlobalAveragePooling2D(name='AvgPool')(x)
-    x = Dropout(1.0 - dropout_keep_prob, name='Dropout')(x)
-    # 全连接层到128
+    x = GlobalAveragePooling2D(name='AvgPool')(x) #平均池化层
+    x = Dropout(1.0 - dropout_keep_prob, name='Dropout')(x)#防止在训练中过拟合
+    # 全连接层到128维度
     x = Dense(classes, use_bias=False, name='Bottleneck')(x)
-    bn_name = _generate_layer_name('BatchNorm', prefix='Bottleneck')
+    bn_name = _generate_layer_name('BatchNorm', prefix='Bottleneck')#得到全连接层名Bottleneck_BatchNorm
     x = BatchNormalization(momentum=0.995, epsilon=0.001, scale=False,
-                           name=bn_name)(x)
+                           name=bn_name)(x)#追加BN层
 
     # 创建模型
     model = Model(inputs, x, name='inception_resnet_v1')
