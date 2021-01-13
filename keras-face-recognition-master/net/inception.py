@@ -24,7 +24,7 @@ def _generate_layer_name(name, branch_idx=None, prefix=None):
         return '_'.join((prefix, name))
     return '_'.join((prefix, 'Branch', str(branch_idx), name))
 
-
+#与BN层合并的2维卷积层
 def conv2d_bn(x,filters,kernel_size,strides=1,padding='same',activation='relu',use_bias=False,name=None):
     x = Conv2D(filters,
                kernel_size,
@@ -32,9 +32,11 @@ def conv2d_bn(x,filters,kernel_size,strides=1,padding='same',activation='relu',u
                padding=padding,
                use_bias=use_bias,
                name=name)(x)
+    # 如果use_bias 为 True,追加BN层 ,默认都在激活函数前添加BN层
     if not use_bias:
         x = BatchNormalization(axis=3, momentum=0.995, epsilon=0.001,
                                scale=False, name=_generate_layer_name('BatchNorm', prefix=name))(x)
+    # 激活函数
     if activation is not None:
         x = Activation(activation, name=_generate_layer_name('Activation', prefix=name))(x)
     return x
@@ -88,11 +90,11 @@ def InceptionResNetV1(input_shape=(160, 160, 3),    #输入图像大小160*160*3
     channel_axis = 3
     inputs = Input(shape=input_shape)
     # 160,160,3 -> 77,77,64
-    x = conv2d_bn(inputs, 32, 3, strides=2, padding='valid', name='Conv2d_1a_3x3')
+    x = conv2d_bn(inputs, 32, 3, strides=2, padding='valid', name='Conv2d_1a_3x3')#设置步长为2的，3x3的32通道的卷积处理
     x = conv2d_bn(x, 32, 3, padding='valid', name='Conv2d_2a_3x3')
     x = conv2d_bn(x, 64, 3, name='Conv2d_2b_3x3')
     # 77,77,64 -> 38,38,64
-    x = MaxPooling2D(3, strides=2, name='MaxPool_3a_3x3')(x)
+    x = MaxPooling2D(3, strides=2, name='MaxPool_3a_3x3')(x)#最大池化
 
     # 38,38,64 -> 17,17,256
     x = conv2d_bn(x, 80, 1, padding='valid', name='Conv2d_3b_1x1')
