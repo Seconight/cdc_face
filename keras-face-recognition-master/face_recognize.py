@@ -22,16 +22,6 @@ class face_rec():
 
         self.known_face_encodings=[]    #编码后的人脸
         self.known_face_names=[]    #编码后的人脸的名字
-        # model.summary()
-        model_path = './model_data/facenet_keras.h5'    #facenet模型文件路径
-        self.facenet_model.load_weights(model_path)     #载入facenet权值
-
-        #-----------------------------------------------#
-        #   对数据库中的人脸进行编码
-        #   known_face_encodings中存储的是编码后的人脸
-        #   known_face_names为人脸的名字
-        #-----------------------------------------------#
-        face_list = os.listdir("face_dataset")  #获取face_dataset数据库文件夹下所有文件
 
         self.known_face_encodings=[]    #存储数据库的编码后的人脸(人脸特征向量)
         self.known_face_names=[]    #存储数据库图片的人名
@@ -41,50 +31,42 @@ class face_rec():
 
             img = cv2.imread("./face_dataset/"+face)    #读取对应的图像
             img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
-            name = face.split(".")[0]   #获得文件名作为人名
-
-            img = cv2.imread("./face_dataset/"+face)    #读取图片
-            img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)   #从BGR转到RGB
-
 
             rectangles = self.mtcnn_model.detectFace(img, self.threshold)  # 利用facenet_model检测人脸
 
             # 转化成正方形
             rectangles = utils.rect2square(np.array(rectangles))
-            # facenet要传入一个160x160的图片  一张图片只有一个人脸，所以直接取下标0
+            # facenet要传入一个160x160的图片
             rectangle = rectangles[0]
             # 人脸的五个关键点
             landmark = (np.reshape(rectangle[5:15],(5,2)) - np.array([int(rectangle[0]),int(rectangle[1])]))/(rectangle[3]-rectangle[1])*160
-            #截取人脸部分图像
+            # 截下人脸图
             crop_img = img[int(rectangle[1]):int(rectangle[3]), int(rectangle[0]):int(rectangle[2])]
             crop_img = cv2.resize(crop_img,(160,160))
-            #人脸对齐
+            # 进行人脸对齐
             new_img,_ = utils.Alignment_1(crop_img,landmark)
-            #扩展一个维度
+            # 增加维度
             new_img = np.expand_dims(new_img,0)
             # 将检测到的人脸传入到facenet的模型中，实现128维特征向量的提取
             face_encoding = utils.calc_128_vec(self.facenet_model,new_img)
-
-            self.known_face_encodings.append(face_encoding) #放入known_face_encodings列表
-            self.known_face_names.append(name)#放入known_face_names列表
+            # 存进已知列表中
+            self.known_face_encodings.append(face_encoding)
+            self.known_face_names.append(name)
 
     def recognize(self,draw):
-        #-----------------------------------------------#
-        #   人脸识别
-        #   先定位，再进行数据库匹配
-        #-----------------------------------------------#
-        height,width,_ = np.shape(draw) #获得图片长宽
-        draw_rgb = cv2.cvtColor(draw,cv2.COLOR_BGR2RGB) #从BGR转到RGB
+        #人脸识别
+        #先定位，再进行数据库匹配
+        height,width,_ = np.shape(draw)
+        draw_rgb = cv2.cvtColor(draw,cv2.COLOR_BGR2RGB)
 
-        rectangles = self.mtcnn_model.detectFace(draw_rgb, self.threshold)  # 利用facenet_model检测人脸
+        # 检测人脸
+        rectangles = self.mtcnn_model.detectFace(draw_rgb, self.threshold)
 
-        # 没检测到人脸
         if len(rectangles)==0:
             return
 
         # 转化成正方形并同时限制不能超出图像范围
         rectangles = utils.rect2square(np.array(rectangles,dtype=np.int32))
-        #限制人脸框的位置在整张图片之内
         rectangles[:,0] = np.clip(rectangles[:,0],0,width)
         rectangles[:,1] = np.clip(rectangles[:,1],0,height)
         rectangles[:,2] = np.clip(rectangles[:,2],0,width)
@@ -100,24 +82,23 @@ class face_rec():
             crop_img = cv2.resize(crop_img,(160,160))
             #人脸矫正
             new_img,_ = utils.Alignment_1(crop_img,landmark)
-            # 扩展一个维度
             new_img = np.expand_dims(new_img,0)
-            # 将检测到的人脸传入到facenet的模型中，实现128维特征向量的提取
+            #计算128维特征向量并保存在列表中
             face_encoding = utils.calc_128_vec(self.facenet_model,new_img)
-            face_encodings.append(face_encoding)    #添加到face_encodings列表
+            face_encodings.append(face_encoding)
 
+        face_names = []
         for face_encoding in face_encodings:
-            # 取出一张脸并与数据库中所有的人脸进行对比，计算得分，要求距离小于0.9则识别成功
-            matches = utils.compare_faces(self.known_face_encodings, face_encoding, tolerance = 0.9)
-            name = "Unknown"    #默认为Unknown
+            # 取出一张脸并与数据库中所有的人脸进行对比，计算得分
+            matches = utils.compare_faces(self.known_face_encodings, face_encoding )
+            name = "Unknown"
             # 找出距离最近的人脸
             face_distances = utils.face_distance(self.known_face_encodings, face_encoding)
-            # 取出这个最近人脸的下标
+            # 取出这个最近人脸的评分
             best_match_index = np.argmin(face_distances)
-            # 人脸与数据库中匹配上，将name改为数据库中对应人名
             if matches[best_match_index]:
                 name = self.known_face_names[best_match_index]
-            face_names.append(name) #添加到face_names列表
+            face_names.append(name)
 
         rectangles = rectangles[:,0:4]
 
@@ -125,7 +106,7 @@ class face_rec():
         for (left, top, right, bottom), name in zip(rectangles, face_names):
             cv2.rectangle(draw, (left, top), (right, bottom), (0, 0, 255), 2)
             font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(draw, name, (left , bottom - 15), font, 0.75, (255, 255, 255), 2) #显示人名
+            cv2.putText(draw, name, (left , bottom - 15), font, 0.75, (255, 255, 255), 2) 
         return draw
 
 if __name__ == "__main__":
