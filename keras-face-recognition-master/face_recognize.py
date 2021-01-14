@@ -124,6 +124,6 @@ if __name__ == "__main__":
 
     # video_capture.release()
     # cv2.destroyAllWindows()
-    draw=cv2.imread("10.jpg")
+    draw=cv2.imread("8.jpg")
     dududu.recognize(draw)
     cv2.imwrite("result.jpg",draw)
