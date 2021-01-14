@@ -37,11 +37,11 @@ class face_rec():
 
             # 转化成正方形
             rectangles = utils.rect2square(np.array(rectangles))
-            # facenet要传入一个160x160的图片
+            # facenet要传入一个160x160的图片  一张图片只有一个人脸，所以直接取下标0
             rectangle = rectangles[0]
             # 记下他们的landmark
             landmark = (np.reshape(rectangle[5:15],(5,2)) - np.array([int(rectangle[0]),int(rectangle[1])]))/(rectangle[3]-rectangle[1])*160
-            #截取人脸部分
+            #截取人脸部分图像
             crop_img = img[int(rectangle[1]):int(rectangle[3]), int(rectangle[0]):int(rectangle[2])]
             crop_img = cv2.resize(crop_img,(160,160))
             #人脸对齐
@@ -60,16 +60,17 @@ class face_rec():
         #   先定位，再进行数据库匹配
         #-----------------------------------------------#
         height,width,_ = np.shape(draw) #获得图片长宽
-        draw_rgb = cv2.cvtColor(draw,cv2.COLOR_BGR2RGB)
+        draw_rgb = cv2.cvtColor(draw,cv2.COLOR_BGR2RGB) #从BGR转到RGB
 
-        # 检测人脸
-        rectangles = self.mtcnn_model.detectFace(draw_rgb, self.threshold)
+        rectangles = self.mtcnn_model.detectFace(draw_rgb, self.threshold)  # 利用facenet_model检测人脸
 
+        # 没检测到人脸
         if len(rectangles)==0:
             return
 
         # 转化成正方形
         rectangles = utils.rect2square(np.array(rectangles,dtype=np.int32))
+        #限制人脸框的位置在整张图片之内
         rectangles[:,0] = np.clip(rectangles[:,0],0,width)
         rectangles[:,1] = np.clip(rectangles[:,1],0,height)
         rectangles[:,2] = np.clip(rectangles[:,2],0,width)
@@ -77,33 +78,38 @@ class face_rec():
         #-----------------------------------------------#
         #   对检测到的人脸进行编码
         #-----------------------------------------------#
-        face_encodings = []
-        for rectangle in rectangles:
-            landmark = (np.reshape(rectangle[5:15],(5,2)) - np.array([int(rectangle[0]),int(rectangle[1])]))/(rectangle[3]-rectangle[1])*160
+        face_encodings = [] #保存所有人脸特征向量
+        face_names = []  # 保存检测结果
 
+        #依次对图片中的每张人脸提取特征向量
+        for rectangle in rectangles:
+            # 记下landmark
+            landmark = (np.reshape(rectangle[5:15],(5,2)) - np.array([int(rectangle[0]),int(rectangle[1])]))/(rectangle[3]-rectangle[1])*160
+            # 截取人脸部分图像
             crop_img = draw_rgb[int(rectangle[1]):int(rectangle[3]), int(rectangle[0]):int(rectangle[2])]
             crop_img = cv2.resize(crop_img,(160,160))
-
+            # 人脸对齐
             new_img,_ = utils.Alignment_1(crop_img,landmark)
+            # 扩展一个维度
             new_img = np.expand_dims(new_img,0)
-
+            # 将检测到的人脸传入到facenet的模型中，实现128维特征向量的提取
             face_encoding = utils.calc_128_vec(self.facenet_model,new_img)
-            face_encodings.append(face_encoding)
+            face_encodings.append(face_encoding)    #添加到face_encodings列表
 
-        face_names = []
         for face_encoding in face_encodings:
-            # 取出一张脸并与数据库中所有的人脸进行对比，计算得分
+            # 取出一张脸并与数据库中所有的人脸进行对比，计算得分，要求距离小于0.9则识别成功
             matches = utils.compare_faces(self.known_face_encodings, face_encoding, tolerance = 0.9)
-            name = "Unknown"
+            name = "Unknown"    #默认为Unknown
             # 找出距离最近的人脸
             face_distances = utils.face_distance(self.known_face_encodings, face_encoding)
-            # 取出这个最近人脸的评分
+            # 取出这个最近人脸的下标
             best_match_index = np.argmin(face_distances)
+            # 人脸与数据库中匹配上，将name改为数据库中对应人名
             if matches[best_match_index]:
                 name = self.known_face_names[best_match_index]
-            face_names.append(name)
+            face_names.append(name) #添加到face_names列表
 
-        rectangles = rectangles[:,0:4]
+        rectangles = rectangles[:,0:4] #取出人脸位置
         #-----------------------------------------------#
         #   画框~!~
         #-----------------------------------------------#
@@ -111,7 +117,7 @@ class face_rec():
             cv2.rectangle(draw, (left, top), (right, bottom), (0, 0, 255), 2)
             
             font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(draw, name, (left , bottom - 15), font, 0.75, (255, 255, 255), 2) 
+            cv2.putText(draw, name, (left , bottom - 15), font, 0.75, (255, 255, 255), 2) #显示人名
         return draw
 
 if __name__ == "__main__":
