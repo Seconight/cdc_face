@@ -345,7 +345,7 @@ def face_distance(face_encodings, face_to_compare):
                      #norm函数详解见https://blog.csdn.net/cjhxydream/article/details/108192497
 
 #比较人脸
-def compare_faces(known_face_encodings, face_encoding_to_check, tolerance=0.6):
+def compare_faces(known_face_encodings, face_encoding_to_check, tolerance=0.9):
     dis = face_distance(known_face_encodings, face_encoding_to_check) 
     return list(dis <= tolerance)
 
