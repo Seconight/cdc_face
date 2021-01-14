@@ -30,11 +30,11 @@ def _generate_layer_name(name, branch_idx=None, prefix=None):
 #与BN层合并的2维卷积层
 def conv2d_bn(x,filters,kernel_size,strides=1,padding='same',activation='relu',use_bias=False,name=None):
     # 根据参数创建二维卷积层
-    x = Conv2D(filters,#过滤器的个数
-               kernel_size,#卷积核的数量
-               strides=strides,#步长
-               padding=padding,#“SAME”表示边界要填充，即给边界加上padding让卷积的输入和输出保持同样（SAME）尺寸；“VALID”表示边界不填充
-               use_bias=use_bias,#是否使用偏置层（BN）
+    x = Conv2D(filters, #过滤器的个数
+               kernel_size, #卷积核的数量
+               strides=strides, #步长
+               padding=padding, #“SAME”表示边界要填充，即给边界加上padding让卷积的输入和输出保持同样（SAME）尺寸；“VALID”表示边界不填充
+               use_bias=use_bias,   #是否使用偏置层（BN）
                name=name)(x)
     # 如果use_bias 为 True,追加BN层 ,默认都在激活函数前添加BN层
     if not use_bias:
@@ -85,12 +85,12 @@ def _inception_resnet_block(x, scale, block_type, block_idx, activation='relu'):
 
     mixed = Concatenate(axis=channel_axis, name=name_fmt('Concatenate'))(branches)  #利用列表的拼接完成卷积层堆叠
     up = conv2d_bn(mixed,K.int_shape(x)[channel_axis],1,activation=None,use_bias=True,
-                   name=name_fmt('Conv2d_1x1'))#设置1x1的卷积处理（通道调整）
+                   name=name_fmt('Conv2d_1x1')) #设置1x1的卷积处理（通道调整）
     up = Lambda(scaling,
                 output_shape=K.int_shape(up)[1:],
                 arguments={'scale': scale})(up)
-    x = add([x, up])#与未经处理的分支部分进行相加
-    if activation is not None:#激活函数
+    x = add([x, up])    #与未经处理的分支部分进行相加
+    if activation is not None:  #激活函数
         x = Activation(activation, name=name_fmt('Activation'))(x)
     return x
 
