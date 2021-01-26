@@ -7,51 +7,24 @@ from net.inception import InceptionResNetV1
 
 class face_rec():
     def __init__(self):
-        self.mtcnn_model = mtcnn()  #创建mtcnn对象检测图片中的人脸
-        self.threshold = [0.5,0.8,0.9]  #门限
-
-        #载入facenet将检测到的人脸转化为128维的向量
-        self.facenet_model = InceptionResNetV1()
-        model_path = './model_data/facenet_keras.h5'
-        self.facenet_model.load_weights(model_path)
-
-        #对数据库中的人脸进行编码
-        #known_face_encodings中存储的是编码后的人脸
-        #known_face_names为人脸的名字
-        face_list = os.listdir("face_dataset")  #存放人脸照片的目录
-
-        self.known_face_encodings=[]    #编码后的人脸
-        self.known_face_names=[]    #编码后的人脸的名字
-
-        self.known_face_encodings=[]    #存储数据库的编码后的人脸(人脸特征向量)
-        self.known_face_names=[]    #存储数据库图片的人名
-        #依次对数据库中数据提取人脸特征向量
-        for face in face_list:
-            name = face.split(".")[0]   #分离出人名
-
-            img = cv2.imread("./face_dataset/"+face)    #读取对应的图像
-            img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
-
-            rectangles = self.mtcnn_model.detectFace(img, self.threshold)  # 利用facenet_model检测人脸
-
-            # 转化成正方形
-            rectangles = utils.rect2square(np.array(rectangles))
-            # facenet要传入一个160x160的图片
-            rectangle = rectangles[0]
-            # 人脸的五个关键点
-            landmark = (np.reshape(rectangle[5:15],(5,2)) - np.array([int(rectangle[0]),int(rectangle[1])]))/(rectangle[3]-rectangle[1])*160
-            # 截下人脸图
-            crop_img = img[int(rectangle[1]):int(rectangle[3]), int(rectangle[0]):int(rectangle[2])]
-            crop_img = cv2.resize(crop_img,(160,160))
-            # 进行人脸对齐
-            new_img,_ = utils.Alignment_1(crop_img,landmark)
-            # 增加维度
-            new_img = np.expand_dims(new_img,0)
-            # 将检测到的人脸传入到facenet的模型中，实现128维特征向量的提取
-            face_encoding = utils.calc_128_vec(self.facenet_model,new_img)
-            # 存进已知列表中
-            self.known_face_encodings.append(face_encoding)
-            self.known_face_names.append(name)
+            # 从学生encoding文件中读取encoding信息
+            f=open('./shouldStudents.txt','r')
+            students=""
+            s=f.readlines()
+            for each in s:
+                students=s+each
+            f.close()
+            student=students.split(";")
+            for each in student:
+                studnetId=each[:13]
+                studentEncodings=each[14:]
+                face_encoding=studentEncodings.split(",")
+                newencoding=[]
+                for each in face_encoding:
+                    newencoding.append(float(each))
+                # 存进已知列表中
+                self.known_face_encodings.append(newencoding)
+                self.known_face_names.append(studnetId)
 
     def recognize(self,draw):
         #人脸识别
@@ -99,6 +72,23 @@ class face_rec():
             if matches[best_match_index]:
                 name = self.known_face_names[best_match_index]
             face_names.append(name)
+        actualStudent=""
+        absebtStudent=""
+        for name in known_face_names:
+            if name is in face_names:
+                actualStudent=actualStudent+name+','
+            else:
+                absebtStudent=absebtStudent+name+','
+        if(actualStudent.__len__!=0):
+            actualStudent=actualStudent[0:actualStudent.__len__]
+        if(absebtStudent.__len__!=0):
+            absebtStudent=absebtStudent[0:absebtStudent.__len__]
+        f=open('./actualStudent.txt','w')
+        f.write(actualStudent)
+        f.close()
+        f=open('./absentStudent.txt','w')
+        f.write(absebtStudent)
+        f.close()
 
         rectangles = rectangles[:,0:4]
 
@@ -124,6 +114,6 @@ if __name__ == "__main__":
 
     # video_capture.release()
     # cv2.destroyAllWindows()
-    draw=cv2.imread("8.jpg")
+    draw=cv2.imread("attendance.jpg")
     dududu.recognize(draw)
-    cv2.imwrite("result.jpg",draw)
+ 
