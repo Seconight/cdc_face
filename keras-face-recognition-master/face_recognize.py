@@ -11,8 +11,9 @@ class face_rec():
             f=open('./shouldStudents.txt','r')
             students=""
             s=f.readlines()
+            #print(s)
             for each in s:
-                students=s+each
+                students=students+each
             f.close()
             student=students.split(";")
             for each in student:
@@ -74,7 +75,8 @@ class face_rec():
             face_names.append(name)
         actualStudent=""
         absebtStudent=""
-        for name in known_face_names:
+        print(face_names)
+        for name in self.known_face_names:
             if name in face_names:
                 actualStudent=actualStudent+name+','
             else:
