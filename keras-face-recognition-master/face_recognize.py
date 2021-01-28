@@ -75,7 +75,7 @@ class face_rec():
         actualStudent=""
         absebtStudent=""
         for name in known_face_names:
-            if name is in face_names:
+            if name in face_names:
                 actualStudent=actualStudent+name+','
             else:
                 absebtStudent=absebtStudent+name+','

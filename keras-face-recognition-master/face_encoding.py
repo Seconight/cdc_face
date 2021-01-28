@@ -4,6 +4,7 @@ import numpy as np
 from net.mtcnn import mtcnn
 import utils.utils as utils
 from net.inception import InceptionResNetV1
+import sys
 
 
 mtcnn_model = mtcnn()  #创建mtcnn对象检测图片中的人脸
@@ -13,7 +14,11 @@ threshold = [0.5,0.8,0.9]  #门限
 facenet_model = InceptionResNetV1()
 model_path = './model_data/facenet_keras.h5'
 facenet_model.load_weights(model_path)
-img = cv2.imread("./userFace/face.jpg")    #读取对应的图像
+# faceImage
+img = cv2.imread('./userFace/'+sys.argv[1]+'.jpg')    #读取对应的图像
+# print(facePath)
+# img = cv2.imread(facePath)    #读取对应的图像
+#cv2.imshow(img)
 img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
 
 rectangles = mtcnn_model.detectFace(img, threshold)  # 利用facenet_model检测人脸
@@ -34,6 +39,8 @@ new_img = np.expand_dims(new_img,0)
 # 将检测到的人脸传入到facenet的模型中，实现128维特征向量的提取
 face_encoding = utils.calc_128_vec(facenet_model,new_img)
 enc2str = ",".join(str(li) for li in face_encoding.tolist())
-f=open('./userFace/encoding.txt','w')
+# 设置输出路径
+encodingPath = './userFace/encoding'+sys.argv[1]+'.txt'
+f=open(encodingPath,'w')
 f.write(enc2str)
 f.close()
