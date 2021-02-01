@@ -92,10 +92,6 @@ class face_rec():
                 actualStudent=actualStudent+name+','
             else:
                 absebtStudent=absebtStudent+name+','
-        if(len(actualStudent)!=0):
-            actualStudent=actualStudent[0:len(actualStudent)-1]
-        if(len(absebtStudent)!=0):
-            absebtStudent=absebtStudent[0:len(absebtStudent)-1]
         f=open('./actualStudent.txt','w')
         f.write(actualStudent)
         f.close()
