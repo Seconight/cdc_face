@@ -7,6 +7,7 @@ from net.inception import InceptionResNetV1
 
 class face_rec():
     def __init__(self):
+<<<<<<< Updated upstream
         self.mtcnn_model = mtcnn()  #创建mtcnn对象检测图片中的人脸
         self.threshold = [0.5,0.8,0.9]  #门限
         self.known_face_encodings=[]    #编码后的人脸
@@ -36,6 +37,36 @@ class face_rec():
             self.known_face_encodings.append(newencoding)
             self.known_face_names.append(studnetId)
 
+=======
+            self.known_face_encodings=[]    #编码后的人脸
+            self.known_face_names=[]    #编码后的人脸的名字
+            self.mtcnn_model = mtcnn()
+            self.threshold = [0.5,0.8,0.9]
+             #载入facenet将检测到的人脸转化为128维的向量
+            self.facenet_model = InceptionResNetV1()
+            model_path = './model_data/facenet_keras.h5'
+            self.facenet_model.load_weights(model_path)
+            # 从学生encoding文件中读取encoding信息
+            f=open('./shouldStudents.txt','r')
+            students=""
+            s=f.readlines()
+            #print(s)
+            for each in s:
+                students=students+each
+            f.close()
+            student=students.split(";")
+            for each in student:
+                studnetId=each[:13]
+                studentEncodings=each[14:]
+                face_encoding=studentEncodings.split(",")
+                newencoding=[]
+                for each in face_encoding:
+                    newencoding.append(float(each))
+                # 存进已知列表中
+                self.known_face_encodings.append(newencoding)
+                self.known_face_names.append(studnetId)
+            print(self.known_face_names)
+>>>>>>> Stashed changes
 
     def recognize(self,draw):
         #人脸识别
@@ -70,6 +101,7 @@ class face_rec():
             #计算128维特征向量并保存在列表中
             face_encoding = utils.calc_128_vec(self.facenet_model,new_img)
             face_encodings.append(face_encoding)
+        i=0
 
         face_names = []
         for face_encoding in face_encodings:
@@ -82,6 +114,8 @@ class face_rec():
             best_match_index = np.argmin(face_distances)
             if matches[best_match_index]:
                 name = self.known_face_names[best_match_index]
+                print(name)
+                i=0
             face_names.append(name)
         actualStudent=""
         absebtStudent=""
@@ -92,10 +126,21 @@ class face_rec():
                 actualStudent=actualStudent+name+','
             else:
                 absebtStudent=absebtStudent+name+','
+<<<<<<< Updated upstream
+=======
+        # if(actualStudent.__len__!=0):
+        #     actualStudent=actualStudent[0:actualStudent.__len__]
+        # if(absebtStudent.__len__!=0):
+        #     absebtStudent=absebtStudent[0:absebtStudent.__len__]
+>>>>>>> Stashed changes
         if(len(actualStudent)!=0):
             actualStudent=actualStudent[0:len(actualStudent)-1]
         if(len(absebtStudent)!=0):
             absebtStudent=absebtStudent[0:len(absebtStudent)-1]
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
         f=open('./actualStudent.txt','w')
         f.write(actualStudent)
         f.close()
