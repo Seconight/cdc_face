@@ -70,6 +70,7 @@ class face_rec():
             #计算128维特征向量并保存在列表中
             face_encoding = utils.calc_128_vec(self.facenet_model,new_img)
             face_encodings.append(face_encoding)
+        i=0
 
         face_names = []
         for face_encoding in face_encodings:
@@ -82,6 +83,8 @@ class face_rec():
             best_match_index = np.argmin(face_distances)
             if matches[best_match_index]:
                 name = self.known_face_names[best_match_index]
+                print(name)
+                i=0
             face_names.append(name)
         actualStudent=""
         absebtStudent=""
@@ -92,6 +95,14 @@ class face_rec():
                 actualStudent=actualStudent+name+','
             else:
                 absebtStudent=absebtStudent+name+','
+        # if(actualStudent.__len__!=0):
+        #     actualStudent=actualStudent[0:actualStudent.__len__]
+        # if(absebtStudent.__len__!=0):
+        #     absebtStudent=absebtStudent[0:absebtStudent.__len__]
+        if(len(actualStudent)!=0):
+            actualStudent=actualStudent[0:len(actualStudent)-1]
+        if(len(absebtStudent)!=0):
+            absebtStudent=absebtStudent[0:len(absebtStudent)-1]
         f=open('./actualStudent.txt','w')
         f.write(actualStudent)
         f.close()
