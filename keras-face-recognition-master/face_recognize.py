@@ -1,9 +1,13 @@
 import cv2
 import os
 import numpy as np
+import sys
 from net.mtcnn import mtcnn
 import utils.utils as utils
 from net.inception import InceptionResNetV1
+
+
+
 
 class face_rec():
     def __init__(self):
@@ -86,15 +90,36 @@ class face_rec():
                 print(name)
                 i=0
             face_names.append(name)
+
         actualStudent=""
         absebtStudent=""
+        acFile=open('./actualStudent.txt','a+')
+        acNames=acFile.readline()
+        acNames = acNames.split(',')
+        abFile=open('./absentStudent.txt','a+')
+        abNames = abFile.readline()
+        abNames = abNames.split(',')
+
+        while('' in abNames):
+            abNames.remove('')
+
+        for arrive in abNames:
+            if(arrive in acNames):
+                abNames.remove(arrive)
+
         print(face_names)
         print(self.known_face_names)
         for name in self.known_face_names:
             if name in face_names:
-                actualStudent=actualStudent+name+','
+                if name in acNames:
+                    actualStudent = actualStudent
+                else :
+                    actualStudent=actualStudent+name+','
             else:
-                absebtStudent=absebtStudent+name+','
+                if name in abNames:
+                    absebtStudent = absebtStudent
+                else :
+                    absebtStudent=absebtStudent+name+','
         # if(actualStudent.__len__!=0):
         #     actualStudent=actualStudent[0:actualStudent.__len__]
         # if(absebtStudent.__len__!=0):
@@ -103,10 +128,11 @@ class face_rec():
             actualStudent=actualStudent[0:len(actualStudent)-1]
         if(len(absebtStudent)!=0):
             absebtStudent=absebtStudent[0:len(absebtStudent)-1]
-        f=open('./actualStudent.txt','w')
+
+        f=open('./actualStudent.txt','a+')
         f.write(actualStudent)
         f.close()
-        f=open('./absentStudent.txt','w')
+        f=open('./absentStudent.txt','a+')
         f.write(absebtStudent)
         f.close()
 
@@ -134,6 +160,21 @@ if __name__ == "__main__":
 
     # video_capture.release()
     # cv2.destroyAllWindows()
-    draw=cv2.imread("attendance.jpg")
-    dududu.recognize(draw)
+
+    for i in range(int(sys.argv[1])) :
+        draw=cv2.imread("./attendance/attendance"+str(i)+".jpg")
+        dududu.recognize(draw)
+        if(i < int(sys.argv[1])-1):
+            f=open('./actualStudent.txt','a+')
+            f.write(",")
+            f.close()
+            f=open('./absentStudent.txt','a+')
+            f.write(",")
+            f.close()
+    
+    
+
+    sign=open('./isFinished.txt','w')
+    sign.write('finished')
+    sign.close()
  

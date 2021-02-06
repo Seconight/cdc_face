@@ -44,3 +44,5 @@ encodingPath = './userFace/encoding'+sys.argv[1]+'.txt'
 f=open(encodingPath,'w')
 f.write(enc2str)
 f.close()
+
+print("finished")
