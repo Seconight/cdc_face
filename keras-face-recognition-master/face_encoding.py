@@ -15,7 +15,7 @@ facenet_model = InceptionResNetV1()
 model_path = './model_data/facenet_keras.h5'
 facenet_model.load_weights(model_path)
 # faceImage
-img = cv2.imread('./userFace/'+sys.argv[1]+'.jpg')    #读取对应的图像
+img = cv2.imread('./userFace/'+sys.argv[1]+'/'+sys.argv[1]+'_'+sys.argv[2]+'.jpg')    #读取对应的图像
 # print(facePath)
 # img = cv2.imread(facePath)    #读取对应的图像
 #cv2.imshow(img)
@@ -40,7 +40,7 @@ new_img = np.expand_dims(new_img,0)
 face_encoding = utils.calc_128_vec(facenet_model,new_img)
 enc2str = ",".join(str(li) for li in face_encoding.tolist())
 # 设置输出路径
-encodingPath = './userFace/encoding'+sys.argv[1]+'.txt'
+encodingPath = './userFace/'+sys.argv[1]+'/encoding'+sys.argv[1]+'_'+sys.argv[2]+'.txt'
 f=open(encodingPath,'w')
 f.write(enc2str)
 f.close()
