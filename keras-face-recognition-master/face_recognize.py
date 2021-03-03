@@ -147,6 +147,7 @@ class face_rec():
 
 if __name__ == "__main__":
 
+    os.environ['CUDA_VISIBLE_DEVICES'] = '/gpu:0'
     dududu = face_rec() #创建人脸识别类对象
     #此处被注释代码不要删除
     # video_capture = cv2.VideoCapture(0)

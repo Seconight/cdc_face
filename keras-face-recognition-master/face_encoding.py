@@ -6,6 +6,7 @@ import utils.utils as utils
 from net.inception import InceptionResNetV1
 import sys
 
+os.environ['CUDA_VISIBLE_DEVICES'] = '/gpu:0'
 
 mtcnn_model = mtcnn()  #创建mtcnn对象检测图片中的人脸
 threshold = [0.5,0.8,0.9]  #门限
