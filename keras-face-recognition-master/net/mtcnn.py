@@ -6,6 +6,9 @@ import numpy as np
 import utils.utils as utils
 import cv2
 
+config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(allow_growth=True))
+sess = tf.compat.v1.Session(config=config)
+
 #Pnet粗略获取人脸框
 #输出bbox位置和是否有人脸的置信度
 #模型参考https://baijiahao.baidu.com/s?id=1644934945515389890&wfr=spider&for=pc
