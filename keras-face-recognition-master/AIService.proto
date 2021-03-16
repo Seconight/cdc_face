@@ -1,0 +1,23 @@
+syntax = "proto3";
+package example;
+service Face {
+    rpc FaceDetect(DetectRequest) returns (DetectReply) {}
+    rpc FaceRecognize(RecognizeRequest) returns (RecognizeReply) {}
+}
+
+message DetectRequest {
+    string Id=1; 
+    string shouldStudents = 2;
+}
+
+message DetectReply {
+    string actualStudents = 1;
+}
+
+message RecognizeRequest {
+    string studentId = 1;
+}
+
+message RecognizeReply {
+    string encodings = 1;
+}

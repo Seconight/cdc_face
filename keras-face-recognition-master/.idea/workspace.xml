@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="c8a21742-b38d-455c-abd8-128d46238807" name="Default Changelist" comment="" />
+    <list default="true" id="c8a21742-b38d-455c-abd8-128d46238807" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/attendance.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/face_encoding.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/face_recognize.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/graph.drawio" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/utils.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -19,6 +26,7 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../Project/student_sign_demo/pom.xml" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunManager">
@@ -43,12 +51,8 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Python.face_recognize" />
-      </list>
-    </recent_temporary>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -61,59 +65,5 @@
       <updated>1610447570887</updated>
     </task>
     <servers />
-  </component>
-  <component name="WindowStateProjectService">
-    <state x="651" y="279" key="#Notifications" timestamp="1610518095813">
-      <screen x="0" y="0" width="1536" height="834" />
-    </state>
-    <state x="651" y="279" key="#Notifications/0.0.1536.834@0.0.1536.834" timestamp="1610518095813" />
-    <state x="485" y="217" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1610504990662">
-      <screen x="0" y="0" width="1536" height="834" />
-    </state>
-    <state x="485" y="217" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1536.834@0.0.1536.834" timestamp="1610504990662" />
-    <state x="497" y="17" key="#face_recognize" timestamp="1610505242093">
-      <screen x="0" y="0" width="1536" height="834" />
-    </state>
-    <state x="497" y="17" key="#face_recognize/0.0.1536.834@0.0.1536.834" timestamp="1610505242093" />
-    <state width="1515" height="124" key="GridCell.Tab.0.bottom" timestamp="1610509486853">
-      <screen x="0" y="0" width="1536" height="834" />
-    </state>
-    <state width="1515" height="124" key="GridCell.Tab.0.bottom/0.0.1536.834@0.0.1536.834" timestamp="1610509486853" />
-    <state width="1515" height="124" key="GridCell.Tab.0.center" timestamp="1610509486853">
-      <screen x="0" y="0" width="1536" height="834" />
-    </state>
-    <state width="1515" height="124" key="GridCell.Tab.0.center/0.0.1536.834@0.0.1536.834" timestamp="1610509486853" />
-    <state width="1515" height="124" key="GridCell.Tab.0.left" timestamp="1610509486853">
-      <screen x="0" y="0" width="1536" height="834" />
-    </state>
-    <state width="1515" height="124" key="GridCell.Tab.0.left/0.0.1536.834@0.0.1536.834" timestamp="1610509486853" />
-    <state width="1515" height="124" key="GridCell.Tab.0.right" timestamp="1610509486853">
-      <screen x="0" y="0" width="1536" height="834" />
-    </state>
-    <state width="1515" height="124" key="GridCell.Tab.0.right/0.0.1536.834@0.0.1536.834" timestamp="1610509486853" />
-    <state width="1515" height="265" key="GridCell.Tab.1.bottom" timestamp="1610509486841">
-      <screen x="0" y="0" width="1536" height="834" />
-    </state>
-    <state width="1515" height="265" key="GridCell.Tab.1.bottom/0.0.1536.834@0.0.1536.834" timestamp="1610509486841" />
-    <state width="1515" height="265" key="GridCell.Tab.1.center" timestamp="1610509486840">
-      <screen x="0" y="0" width="1536" height="834" />
-    </state>
-    <state width="1515" height="265" key="GridCell.Tab.1.center/0.0.1536.834@0.0.1536.834" timestamp="1610509486840" />
-    <state width="1515" height="265" key="GridCell.Tab.1.left" timestamp="1610509486840">
-      <screen x="0" y="0" width="1536" height="834" />
-    </state>
-    <state width="1515" height="265" key="GridCell.Tab.1.left/0.0.1536.834@0.0.1536.834" timestamp="1610509486840" />
-    <state width="1515" height="265" key="GridCell.Tab.1.right" timestamp="1610509486841">
-      <screen x="0" y="0" width="1536" height="834" />
-    </state>
-    <state width="1515" height="265" key="GridCell.Tab.1.right/0.0.1536.834@0.0.1536.834" timestamp="1610509486841" />
-    <state x="270" y="61" key="SettingsEditor" timestamp="1610505260654">
-      <screen x="0" y="0" width="1536" height="834" />
-    </state>
-    <state x="270" y="61" key="SettingsEditor/0.0.1536.834@0.0.1536.834" timestamp="1610505260654" />
-    <state width="600" height="428" key="javadoc.popup" timestamp="1610538575738">
-      <screen x="0" y="0" width="1536" height="834" />
-    </state>
-    <state width="600" height="428" key="javadoc.popup/0.0.1536.834@0.0.1536.834" timestamp="1610538575738" />
   </component>
 </project>
