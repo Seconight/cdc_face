@@ -74,7 +74,7 @@ class face_rec():
             known_face_names.append(studnetId)
         print("学生加载")
         actualStu = ""
-        start = time.time()
+        print("id is "+id)
         for root, ds, fs in os.walk(".\\attendance\\"+id):#获得文件夹下所有文件
             for f in fs:
                 #读取文件
