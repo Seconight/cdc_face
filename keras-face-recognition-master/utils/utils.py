@@ -315,16 +315,16 @@ def compare_faces(known_face_encodings, face_encoding_to_check, tolerance=0.9):
 
 #更改图片尺寸
 def reshape_face(src_img):
-    h,w,c=src_img.shape()
-    best_h=4000
-    best_w=5000
+    h,w,c=src_img.shape
+    best_h=3000
+    best_w=4000
     if(h>best_h or w>best_w):
         #调整宽和高至比例最接近5000*4000
         hb=best_h/h
         wb=best_w/w
         if(hb<=wb):
-            img = np.reshape(src_img, [h*hb, w*hb, c])
+            img = cv2.resize(src_img, (int(w*hb), int(h*hb)))
             return img
         else:
-            img=np.reshape(src_img,[h*wb, w*wb, c])
+            img=cv2.resize(src_img,(int(w*wb), int(h*wb)))
             return img

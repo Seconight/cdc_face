@@ -2,7 +2,7 @@ import grpc
 import AIService_pb2 as pb2
 import AIService_pb2_grpc as pb2_grpc
 def run():
-    # 连接 rpc 服务器
+    # 连接 rpc 服务器测试文档
     channel = grpc.insecure_channel('localhost:50051')
     # 调用 rpc 服务
     stub = pb2_grpc.FaceStub(channel)
