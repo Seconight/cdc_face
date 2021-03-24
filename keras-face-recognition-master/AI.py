@@ -217,6 +217,7 @@ class face_rec():
                 fullname = os.path.join(root, f)#文件全名
                 print(fullname)
                 draw=cv2.imread(fullname)
+                draw = utils.letterbox_image(draw, [3200, 3200])
                 #draw = utils.reshape_face(draw)
                 #人脸识别
                 #先定位，再进行数据库匹配
@@ -262,14 +263,22 @@ class face_rec():
                 i=0
 
                 face_names = []
+                print('*************has known*****************')
+                print(known_face_encodings)
                 for face_encoding in face_encodings:
                     # 取出一张脸并与数据库中所有的人脸进行对比，计算得分
                     matches = utils.compare_faces(known_face_encodings, face_encoding )
+                    print('**************face_encoding*************')
+                    print(face_encoding)
                     name = "Unknown"
                     # 找出距离最近的人脸
                     face_distances = utils.face_distance(known_face_encodings, face_encoding)
+                    print('face_distances')
+                    print(face_distances)
                     # 取出这个最近人脸的评分
                     best_match_index = np.argmin(face_distances)
+                    print('best index')
+                    print(best_match_index)
                     if matches[best_match_index]:
                         name = known_face_names[best_match_index]
                         print(name)

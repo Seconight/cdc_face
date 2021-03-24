@@ -309,9 +309,22 @@ def face_distance(face_encodings, face_to_compare):
                      #norm函数详解见https://blog.csdn.net/cjhxydream/article/details/108192497
 
 #比较人脸
-def compare_faces(known_face_encodings, face_encoding_to_check, tolerance=0.9):
+def compare_faces(known_face_encodings, face_encoding_to_check, tolerance=1):
     dis = face_distance(known_face_encodings, face_encoding_to_check) 
     return list(dis <= tolerance)
+
+#reshape
+def letterbox_image(image, size):
+    ih, iw, _ = np.shape(image)
+    w, h = size
+    scale = min(w/iw, h/ih)
+    nw = int(iw*scale)
+    nh = int(ih*scale)
+
+    image = cv2.resize(image, (nw,nh))
+    new_image = np.ones([size[1],size[0],3])*128
+    new_image[(h-nh)//2:nh+(h-nh)//2, (w-nw)//2:nw+(w-nw)//2] = image
+    return new_image
 
 #更改图片尺寸
 def reshape_face(src_img):
