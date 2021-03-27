@@ -12,7 +12,7 @@ hhh = face_rec()
 class Face(pb2_grpc.FaceServicer):
     # 实现 proto 文件中定义的 rpc 调用   
     def FaceDetect(self, request, context):
-        return pb2.DetectReply(actualStudents =hhh.center_recognize(request.Id,request.shouldStudents))
+        return pb2.DetectReply(actualStudents =hhh.recognize(request.Id,request.shouldStudents))
     def FaceRecognize(self,request,context):
         return pb2.RecognizeReply(encodings=hhh.encoding(request.studentId))
 
