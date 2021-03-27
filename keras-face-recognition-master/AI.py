@@ -249,6 +249,38 @@ class face_rec():
         else:
             return ''
         
+        return result   
+
+    def center_recognize(self,id,students):
+        known_face_encodings=[]    #编码后的人脸
+        known_face_names=[]    #编码后的人脸的名字
+        student=students.split(";")
+
+        for each in student:
+            studnetId=each[:13]
+            studentEncodings=each[14:]
+            face_encoding=studentEncodings.split(",")
+            newencoding=[]
+            for each in face_encoding:
+                newencoding.append(float(each))
+            # 存进已知列表中
+            known_face_encodings.append(newencoding)
+            known_face_names.append(studnetId)
+        print("学生加载")
+        actualStu = ""
+        print("id is "+id)
+        for root, ds, fs in os.walk(".\\attendance\\"+id):#获得文件夹下所有文件
+            for f in fs:
+                #读取文件
+                fullname = os.path.join(root, f)#文件全名
+                print(fullname)
+                draw=cv2.imread(fullname)
+                #draw = utils.letterbox_image(draw, [3200, 3200])
+                #draw = utils.reshape_face(draw)
+                #人脸识别
+                #先定位，再进行数据库匹配
+                height,width,_ = np.shape(draw)
+                draw_rgb = cv2.cvtColor(draw,cv2.COLOR_BGR2RGB)
 
                 #对检测到的人脸进行编码
         #         face_encodings = [] #人脸编码列表

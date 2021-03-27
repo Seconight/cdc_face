@@ -328,6 +328,7 @@ def letterbox_image(image, size):
     new_image[(h-nh)//2:nh+(h-nh)//2, (w-nw)//2:nw+(w-nw)//2] = image
     return new_image
 
+
 #更改图片尺寸
 def reshape_face(src_img):
     h,w,c=src_img.shape
