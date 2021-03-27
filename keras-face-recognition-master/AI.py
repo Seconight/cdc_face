@@ -71,7 +71,7 @@ class face_rec():
 
         
         # 打开对应学生文件夹，获取文件路径列表
-        image_path = "./database/%s" %(studentId)
+        image_path = "./userFace/%s" %(studentId)
         image_list = glob.glob(image_path + "/*.jpg")
         if len(image_list)==0 :
             return '01'
@@ -99,7 +99,7 @@ class face_rec():
 
         #将人脸embedding保存到文件里
         embedding = np.concatenate(embeddings, 0).mean(0).flatten()
-        np.save("./database/%s/%s" %(studentId, studentId), embedding)
+        np.save("./userFace/%s/%s" %(studentId, studentId), embedding)
         if flag==0:
             return '1'
         else:
@@ -119,7 +119,7 @@ class face_rec():
             return '01'
         else:
             studentsList=students.split(',')
-        database_embeddings = {p:np.load("./database/%s/%s.npy" %(p, p)) for p in studentsList}
+        database_embeddings = {p:np.load("./userFace/%s/%s.npy" %(p, p)) for p in studentsList}
         face_names = ''
         for root, ds, fs in os.walk(".\\attendance\\"+id):#获得文件夹下所有文件
             for f in fs:

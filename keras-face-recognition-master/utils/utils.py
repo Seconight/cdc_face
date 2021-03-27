@@ -5,7 +5,7 @@ import cv2
 import math
 import os
 import matplotlib.pyplot as plt
-persons = os.listdir("database")
+persons = os.listdir("userFace")
 
 #计算原始输入图像每一次缩放的比例（构建图像金字塔）
 def calculateScales(img):   #img为传入的图像
