@@ -180,11 +180,15 @@ class face_rec():
         #       02+图片路径     代表'图片没找到或不存在'后面紧接的是图片路径
         #
         studentsList=[]
+        database_embeddings = {}
         if len(students)==0:
-            return '01'
+            return ""
         else:
             studentsList=students.split(',')
-        database_embeddings = {p:np.load("./userFace/%s/%s.npy" %(p, p)) for p in studentsList}
+        for p in studentsList:
+            if os.path.exists("./userFace/"+p+"/"+p+".npy"):
+                database_embeddings.update({p:np.load("./userFace/%s/%s.npy" %(p, p))})
+        #database_embeddings = {p:np.load("./userFace/%s/%s.npy" %(p, p)) for p in studentsList}
         face_names = ''
         for root, ds, fs in os.walk(".\\attendance\\"+id):#获得文件夹下所有文件
             for f in fs:
@@ -194,9 +198,7 @@ class face_rec():
                 piexif.remove(fullname)
                 print('多余信息已去除')
                 print('start reading '+fullname+'...................')
-                draw=cv2.imread(fullname)
-                if draw is None:
-                    return '02'+fullname  
+                draw=cv2.imread(fullname)  
                 print('finish reading imag')
                 org_image = draw.copy()
                 #人脸识别
@@ -216,13 +218,11 @@ class face_rec():
                     continue
                 
                 # 转化成正方形并同时限制不能超出图像范围
-                rectangles = utils.rect2square(np.array(rectangles,dtype=np.int32))
+                # rectangles = utils.rect2square(np.array(rectangles,dtype=np.int32))
                 # rectangles[:,0] = np.clip(rectangles[:,0],0,width)
                 # rectangles[:,1] = np.clip(rectangles[:,1],0,height)
                 # rectangles[:,2] = np.clip(rectangles[:,2],0,width)
                 # rectangles[:,3] = np.clip(rectangles[:,3],0,height)
-                rectangles[:, [0,2]] = np.clip(rectangles[:, [0,2]], 0, width)
-                rectangles[:, [1,3]] = np.clip(rectangles[:, [1,3]], 0, height)
                 indexList=[]
                 nameList=[]
                 distList=[]
@@ -324,7 +324,7 @@ class face_rec():
                 cv2.imwrite(fullname, org_image)
                 print(fullname+'write finish')
         if(len(face_names)!=0):
-            return '1'+face_names[:-1]
+            return face_names[:-1]
         else:
             return ''
         
