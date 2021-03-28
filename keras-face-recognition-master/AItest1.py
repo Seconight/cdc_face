@@ -10,7 +10,7 @@ def run():
     print("client received: " + response.actualStudents)
     # stu='01218108807'
     # student=''
-    # for i in range(100,102):
+    # for i in range(9,101):
     #     if i < 9:
     #         student=stu+'0'+str(i+1)
     #     else:

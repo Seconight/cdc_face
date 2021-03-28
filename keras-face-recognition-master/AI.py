@@ -11,45 +11,48 @@ from models import MobileFaceNet
 import glob
 import argparse
 import tensorflow as tf
+from net.inception import InceptionResNetV1
 from utils.utils import detect_face, align_face
 import piexif
-def extract_oneface(self,image, marigin=16):
-    # detecting faces
-    image = cv2.cvtColor(image ,cv2.COLOR_BGR2RGB)
-    h, w, c = image.shape
-    rectangles= self.mtcnn_model.detectFace(image, self.threshold)
-    print(len(rectangles))
-    if len(rectangles)!=1:
-        return None
-    for rectangle in rectangles:
-        bounding_boxes = {
-                'box': [int(rectangle[0]), int(rectangle[1]),
-                        int(rectangle[2]-rectangle[0]), int(rectangle[3]-rectangle[1])],
-                'confidence': rectangle[4],
-                'keypoints': {
-                        'left_eye': (int(rectangle[5]), int(rectangle[6])),
-                        'right_eye': (int(rectangle[7]), int(rectangle[8])),
-                        'nose': (int(rectangle[9]), int(rectangle[10])),
-                        'mouth_left': (int(rectangle[11]), int(rectangle[12])),
-                        'mouth_right': (int(rectangle[13]), int(rectangle[14])),
-                }
-        }
+# def extract_oneface(self,image, marigin=16):
+#     # detecting faces
+#     image = cv2.cvtColor(image ,cv2.COLOR_BGR2RGB)
+#     h, w, c = image.shape
+#     rectangles= self.mtcnn_model.detectFace(image, self.threshold)
+#     rectangles = utils.rect2square(np.array(rectangles))
+#     print(len(rectangles))
+#     if len(rectangles)!=1:
+#         return None
+    
+#     for rectangle in rectangles:
+#         bounding_boxes = {
+#                 'box': [int(rectangle[0]), int(rectangle[1]),
+#                         int(rectangle[2]-rectangle[0]), int(rectangle[3]-rectangle[1])],
+#                 'confidence': rectangle[4],
+#                 'keypoints': {
+#                         'left_eye': (int(rectangle[5]), int(rectangle[6])),
+#                         'right_eye': (int(rectangle[7]), int(rectangle[8])),
+#                         'nose': (int(rectangle[9]), int(rectangle[10])),
+#                         'mouth_left': (int(rectangle[11]), int(rectangle[12])),
+#                         'mouth_right': (int(rectangle[13]), int(rectangle[14])),
+#                 }
+#         }
 
-        bounding_box = bounding_boxes['box']
-        keypoints = bounding_boxes['keypoints']
+#         bounding_box = bounding_boxes['box']
+#         keypoints = bounding_boxes['keypoints']
 
-        # align face and extract it out
-        align_image = align_face(image, keypoints)
-        align_image = cv2.cvtColor(align_image ,cv2.COLOR_RGB2BGR)
+#         # align face and extract it out
+#         align_image = align_face(image, keypoints)
+#         align_image = cv2.cvtColor(align_image ,cv2.COLOR_RGB2BGR)
 
-        xmin = max(bounding_box[0] - marigin, 0)
-        ymin = max(bounding_box[1] - marigin, 0)
-        xmax = min(bounding_box[0] + bounding_box[2] + marigin, w)
-        ymax = min(bounding_box[1] + bounding_box[3] + marigin, h)
+#         xmin = max(bounding_box[0] - marigin, 0)
+#         ymin = max(bounding_box[1] - marigin, 0)
+#         xmax = min(bounding_box[0] + bounding_box[2] + marigin, w)
+#         ymax = min(bounding_box[1] + bounding_box[3] + marigin, h)
 
-        crop_image = align_image[ymin:ymax, xmin:xmax, :]
-        # "just need only one face"
-        return crop_image
+#         crop_image = align_image[ymin:ymax, xmin:xmax, :]
+#         # "just need only one face"
+#         return crop_image
 #人脸识别对象类
 class face_rec():
     def __init__(self):
@@ -57,9 +60,13 @@ class face_rec():
         self.mtcnn_model = mtcnn()  #创建mtcnn对象检测图片中的人脸
         print("mtcnn权重加载完毕！！！")
         self.threshold = [0.5,0.8,0.9]  #门限
-        print('开始加载MobileFaceNet权重。。。')
-        self.facenet_model = MobileFaceNet()
-        print("MobileFaceNet权重加载完毕！！！")
+        print('开始加载FaceNet权重。。。')
+        # self.facenet_model = MobileFaceNet()
+        # print("MobileFaceNet权重加载完毕！！！")
+        self.facenet_model_new = InceptionResNetV1()
+        model_path = './model_data/facenet_keras.h5'
+        self.facenet_model_new.load_weights(model_path)
+        print("FaceNet权重加载完毕！！！")
 
     #学生编码
     def encoding(self, studentId):
@@ -68,9 +75,7 @@ class face_rec():
         #比如返回1              代表成功
         #       01              代表'学生图片未找到或不存在'    
         #       02+图片路径     代表'图片检测到人脸数量不对'后面紧接的是图片路径
-
-        
-        # 打开对应学生文件夹，获取文件路径列表
+                # 打开对应学生文件夹，获取文件路径列表
         image_path = "./userFace/%s" %(studentId)
         image_list = glob.glob(image_path + "/*.jpg")
         if len(image_list)==0 :
@@ -84,21 +89,43 @@ class face_rec():
             #调用piexif库的remove函数直接去除exif信息。
             piexif.remove(im_path)
             #读取图片文件
-            image = cv2.imread(im_path)
+            img = cv2.imread(im_path)
+            print(im_path)
             #检测人脸
-            print(im_path+'detect')
-            face = extract_oneface(self,image)
-            
-            if face is None:
+            img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+            #---------------------#
+            #   检测人脸
+            #---------------------#
+            rectangles = self.mtcnn_model.detectFace(img, self.threshold)
+            if len(rectangles)!=1:
                 flag=1
                 faild_path.append(im_path)
                 continue
-                
-            #人脸embedding
-            embeddings.append(self.facenet_model(face))
+            #---------------------#
+            #   转化成正方形
+            #---------------------#
+            rectangles = utils.rect2square(np.array(rectangles))
+            #-----------------------------------------------#
+            #   facenet要传入一个160x160的图片
+            #   利用landmark对人脸进行矫正
+            #-----------------------------------------------#
+            rectangle = rectangles[0]
+            landmark = np.reshape(rectangle[5:15], (5,2)) - np.array([int(rectangle[0]), int(rectangle[1])])
+            crop_img = img[int(rectangle[1]):int(rectangle[3]), int(rectangle[0]):int(rectangle[2])]
+            crop_img, _ = utils.Alignment_1(crop_img,landmark)
+            crop_img = np.expand_dims(cv2.resize(crop_img, (160, 160)), 0)
 
-        #将人脸embedding保存到文件里
+            #--------------------------------------------------------------------#
+            #   将检测到的人脸传入到facenet的模型中，实现128维特征向量的提取
+            #--------------------------------------------------------------------#
+            face_encoding = utils.calc_128_vec(self.facenet_model_new, crop_img)
+            
+            new_face_encoding=[]
+            new_face_encoding.append(face_encoding)
+            
+            embeddings.append(new_face_encoding)
         embedding = np.concatenate(embeddings, 0).mean(0).flatten()
+        
         np.save("./userFace/%s/%s" %(studentId, studentId), embedding)
         if flag==0:
             return '1'
@@ -107,6 +134,44 @@ class face_rec():
             for path in faild_path:
                 errInfo=errInfo+path+'&'
             return errInfo[:-1]
+        
+        # # 打开对应学生文件夹，获取文件路径列表
+        # image_path = "./userFace/%s" %(studentId)
+        # image_list = glob.glob(image_path + "/*.jpg")
+        # if len(image_list)==0 :
+        #     return '01'
+        # #初始化embedding
+        # embeddings = []
+        # flag=0
+        # faild_path=[]
+        # #编列文件列表进行人脸embedding
+        # for im_path in image_list:
+        #     #调用piexif库的remove函数直接去除exif信息。
+        #     piexif.remove(im_path)
+        #     #读取图片文件
+        #     image = cv2.imread(im_path)
+        #     #检测人脸
+        #     print(im_path+'detect')
+        #     face = extract_oneface(self,image)
+            
+        #     if face is None:
+        #         flag=1
+        #         faild_path.append(im_path)
+        #         continue
+                
+        #     #人脸embedding
+        #     embeddings.append(self.facenet_model(face))
+
+        # #将人脸embedding保存到文件里
+        # embedding = np.concatenate(embeddings, 0).mean(0).flatten()
+        # np.save("./userFace/%s/%s" %(studentId, studentId), embedding)
+        # if flag==0:
+        #     return '1'
+        # else:
+        #     errInfo='02'
+        #     for path in faild_path:
+        #         errInfo=errInfo+path+'&'
+        #     return errInfo[:-1]
     #学生识别
     def recognize(self,id,students):#students表示学生
         #返回示例：第一位代表成功或者出错（1/0），后面接的详细信息
@@ -152,10 +217,12 @@ class face_rec():
                 
                 # 转化成正方形并同时限制不能超出图像范围
                 rectangles = utils.rect2square(np.array(rectangles,dtype=np.int32))
-                rectangles[:,0] = np.clip(rectangles[:,0],0,width)
-                rectangles[:,1] = np.clip(rectangles[:,1],0,height)
-                rectangles[:,2] = np.clip(rectangles[:,2],0,width)
-                rectangles[:,3] = np.clip(rectangles[:,3],0,height)
+                # rectangles[:,0] = np.clip(rectangles[:,0],0,width)
+                # rectangles[:,1] = np.clip(rectangles[:,1],0,height)
+                # rectangles[:,2] = np.clip(rectangles[:,2],0,width)
+                # rectangles[:,3] = np.clip(rectangles[:,3],0,height)
+                rectangles[:, [0,2]] = np.clip(rectangles[:, [0,2]], 0, width)
+                rectangles[:, [1,3]] = np.clip(rectangles[:, [1,3]], 0, height)
                 indexList=[]
                 nameList=[]
                 distList=[]
@@ -163,52 +230,64 @@ class face_rec():
                 marigin = 16
 
                 for rectangle in rectangles:
-                    bounding_boxes = {
-                            'box': [int(rectangle[0]), int(rectangle[1]),
-                                    int(rectangle[2]-rectangle[0]), int(rectangle[3]-rectangle[1])],
-                            'confidence': rectangle[4],
-                            'keypoints': {
-                                    'left_eye': (int(rectangle[5]), int(rectangle[6])),
-                                    'right_eye': (int(rectangle[7]), int(rectangle[8])),
-                                    'nose': (int(rectangle[9]), int(rectangle[10])),
-                                    'mouth_left': (int(rectangle[11]), int(rectangle[12])),
-                                    'mouth_right': (int(rectangle[13]), int(rectangle[14])),
-                            }
-                    }
+                    # bounding_boxes = {
+                    #         'box': [int(rectangle[0]), int(rectangle[1]),
+                    #                 int(rectangle[2]-rectangle[0]), int(rectangle[3]-rectangle[1])],
+                    #         'confidence': rectangle[4],
+                    #         'keypoints': {
+                    #                 'left_eye': (int(rectangle[5]), int(rectangle[6])),
+                    #                 'right_eye': (int(rectangle[7]), int(rectangle[8])),
+                    #                 'nose': (int(rectangle[9]), int(rectangle[10])),
+                    #                 'mouth_left': (int(rectangle[11]), int(rectangle[12])),
+                    #                 'mouth_right': (int(rectangle[13]), int(rectangle[14])),
+                    #         }
+                    # }
 
-                    bounding_box = bounding_boxes['box']
-                    keypoints = bounding_boxes['keypoints']
+                    # bounding_box = bounding_boxes['box']
+                    # keypoints = bounding_boxes['keypoints']
 
-                    cv2.circle(org_image,(keypoints['left_eye']),   2, (255,0,0), 3)
-                    cv2.circle(org_image,(keypoints['right_eye']),  2, (255,0,0), 3)
-                    cv2.circle(org_image,(keypoints['nose']),       2, (255,0,0), 3)
-                    cv2.circle(org_image,(keypoints['mouth_left']), 2, (255,0,0), 3)
-                    cv2.circle(org_image,(keypoints['mouth_right']),2, (255,0,0), 3)
-                    cv2.rectangle(org_image,
-                            (bounding_box[0], bounding_box[1]),
-                            (bounding_box[0]+bounding_box[2], bounding_box[1] + bounding_box[3]),
-                            (0,255,0), 2)
-                    # align face and extract it out
-                    align_image = utils.align_face(draw_rgb, keypoints)
+                    # cv2.circle(org_image,(keypoints['left_eye']),   2, (255,0,0), 3)
+                    # cv2.circle(org_image,(keypoints['right_eye']),  2, (255,0,0), 3)
+                    # cv2.circle(org_image,(keypoints['nose']),       2, (255,0,0), 3)
+                    # cv2.circle(org_image,(keypoints['mouth_left']), 2, (255,0,0), 3)
+                    # cv2.circle(org_image,(keypoints['mouth_right']),2, (255,0,0), 3)
+                    # cv2.rectangle(org_image,
+                    #         (bounding_box[0], bounding_box[1]),
+                    #         (bounding_box[0]+bounding_box[2], bounding_box[1] + bounding_box[3]),
+                    #         (0,255,0), 2)
+                    # # align face and extract it out
+                    # align_image = utils.align_face(draw_rgb, keypoints)
 
-                    xmin = max(bounding_box[0] - marigin, 0)
-                    ymin = max(bounding_box[1] - marigin, 0)
-                    xmax = min(bounding_box[0] + bounding_box[2] + marigin, new_w)
-                    ymax = min(bounding_box[1] + bounding_box[3] + marigin, new_h)
+                    # xmin = max(bounding_box[0] - marigin, 0)
+                    # ymin = max(bounding_box[1] - marigin, 0)
+                    # xmax = min(bounding_box[0] + bounding_box[2] + marigin, new_w)
+                    # ymax = min(bounding_box[1] + bounding_box[3] + marigin, new_h)
 
-                    crop_image = align_image[ymin:ymax, xmin:xmax, :]
-                    if crop_image is not None:
-                            t1 = time.time()
-                            embedding = self.facenet_model(crop_image)
-                            person,dist = utils.recognize_face(embedding,studentsList,database_embeddings)
-                            if person!='Unknown':
-                                face_names=face_names+person+','
-                                indexList.append(i)
-                                nameList.append(person)
-                                distList.append(dist)
-                            t2 = time.time()
-                            print("recognize time: %.2fms" %((t2-t1)*1000))
+                    # crop_image = align_image[ymin:ymax, xmin:xmax, :]
+                    #---------------#
+                    #   截取图像
+                    #---------------#
+                    landmark = np.reshape(rectangle[5:15], (5,2)) - np.array([int(rectangle[0]), int(rectangle[1])])
+                    crop_img = draw_rgb[int(rectangle[1]):int(rectangle[3]), int(rectangle[0]):int(rectangle[2])]
+                    #-----------------------------------------------#
+                    #   利用人脸关键点进行人脸对齐
+                    #-----------------------------------------------#
+                    crop_img,_ = utils.Alignment_1(crop_img,landmark)
+                    crop_img = np.expand_dims(cv2.resize(crop_img, (160, 160)), 0)
+                    t1 = time.time()
+                    face_encoding = utils.calc_128_vec(self.facenet_model_new, crop_img)
+                    # face_encodings.append(face_encoding)
+                    person,dist = utils.recognize_face(face_encoding,studentsList,database_embeddings)
+                    if person!='Unknown':
+                        face_names=face_names+person+','
+                        indexList.append(i)
+                        nameList.append(person)
+                        distList.append(dist)
+                        
+                    t2 = time.time()
+                    print("recognize time: %.2fms" %((t2-t1)*1000))
                     i=i+1
+
                 bestNameList=[]
                 
                 #找到识别出的重复人脸中距离最近的标出
@@ -245,7 +324,7 @@ class face_rec():
                 cv2.imwrite(fullname, org_image)
                 print(fullname+'write finish')
         if(len(face_names)!=0):
-            return face_names[:-1]
+            return '1'+face_names[:-1]
         else:
             return ''
         

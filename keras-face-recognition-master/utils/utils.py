@@ -303,13 +303,6 @@ def calc_128_vec(model,img):
     return pre
 
 
-#计算人脸距离
-def face_distance(face_encodings, face_to_compare):
-    if len(face_encodings) == 0:
-        return np.empty((0))
-    return np.linalg.norm(face_encodings - face_to_compare, axis=1) #对矩阵的每一行求L2范数
-                     #norm函数详解见https://blog.csdn.net/cjhxydream/article/details/108192497
-
 #比较人脸
 def compare_faces(known_face_encodings, face_encoding_to_check, tolerance=1):
     dis = face_distance(known_face_encodings, face_encoding_to_check) 
@@ -343,22 +336,44 @@ def reshape_face(src_img):
         else:
             img=cv2.resize(src_img,(int(w*wb), int(h*wb)))
             return img
+#计算人脸距离
+def face_distance(face_encodings, face_to_compare):
+    if len(face_encodings) == 0:
+        return np.empty((0))
+    return np.linalg.norm(face_encodings - face_to_compare, axis=1) #对矩阵的每一行求L2范数
+                     #norm函数详解见https://blog.csdn.net/cjhxydream/article/details/108192497
 
-def recognize_face(q_emb,studentsList,database_embeddings, threshold=1.1):
-    p_score = {}
+# def recognize_face(q_emb,studentsList,database_embeddings, threshold=0.89):
+#     p_score = {}
+#     for person in database_embeddings:
+#         d_emb = database_embeddings[person]
+#         dist = caculateDist(d_emb, q_emb)
+#         if dist <= threshold:
+#             p_score[person] = dist
+#     if len(p_score) == 0:
+#         identity, dist = 'Unknown', 'None'
+#     else:
+#         p = sorted(p_score, key=lambda s: p_score[s])
+#         identity = p[0]  #学号
+#         dist = "%.4f" %p_score[identity]    #距离
+#     print("=> %s: %s" %(identity, dist), end="  ")
+#     return identity,dist
+
+def recognize_face(q_emb,studentsList,database_embeddings,threshold=0.9):
+    new_embeddings=[]
     for person in database_embeddings:
-        d_emb = database_embeddings[person]
-        dist = caculateDist(d_emb, q_emb)
-        if dist <= threshold:
-            p_score[person] = dist
-    if len(p_score) == 0:
-        identity, dist = 'Unknown', 'None'
-    else:
-        p = sorted(p_score, key=lambda s: p_score[s])
-        identity = p[0]  #学号
-        dist = "%.4f" %p_score[identity]    #距离
-    print("=> %s: %s" %(identity, dist), end="  ")
-    return identity,dist
+        new_embeddings.append(database_embeddings[person])
+    distList=face_distance(new_embeddings, q_emb)
+    matches=list(distList<=threshold)
+    name,dist = "Unknown",'None'
+    # 找出距离最近的人脸
+    face_distances = face_distance(new_embeddings, q_emb)
+    # 取出这个最近人脸的评分
+    best_match_index = np.argmin(face_distances)
+    if matches[best_match_index]:
+        name = studentsList[best_match_index]
+        dist=face_distances[best_match_index]
+    return name,dist
 
 def align_face(image, keypoints, scale=1.0):
     eye_center = (
