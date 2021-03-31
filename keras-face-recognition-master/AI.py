@@ -12,6 +12,7 @@ import glob
 import argparse
 import tensorflow as tf
 from net.inception import InceptionResNetV1
+from net.mobilenet import MobileNet
 from utils.utils import detect_face, align_face
 import piexif
 # def extract_oneface(self,image, marigin=16):
@@ -65,6 +66,8 @@ class face_rec():
         # print("MobileFaceNet权重加载完毕！！！")
         self.facenet_model_new = InceptionResNetV1()
         model_path = './model_data/facenet_keras.h5'
+        # self.facenet_model_new = MobileNet()
+        # model_path = './model_data/facenet_mobilenet.h5'
         self.facenet_model_new.load_weights(model_path)
         print("FaceNet权重加载完毕！！！")
 
@@ -199,6 +202,7 @@ class face_rec():
                     return '02'+fullname  
                 print('finish reading imag')
                 org_image = draw.copy()
+                totalstart=time.time()
                 #人脸识别
                 #先定位，再进行数据库匹配
                 height,width,_ = np.shape(draw)
@@ -319,7 +323,8 @@ class face_rec():
                     bestNameList.append(nameList[minIndex])
                     cv2.putText(org_image, nameList[minIndex], (int(rectangles[indexList[minIndex]][0]), int(rectangles[indexList[minIndex]][1])-2), cv2.FONT_HERSHEY_SIMPLEX,
                                                 0.75, (0, 255, 0), 2, lineType=cv2.LINE_AA)
-
+                totalend=time.time()
+                print('total time:'+str(totalend-totalstart))
                                                                                        
                 cv2.imwrite(fullname, org_image)
                 print(fullname+'write finish')
