@@ -67,7 +67,7 @@ class face_rec():
         self.facenet_model_new = InceptionResNetV1()
         # model_path = './model_data/facenet_keras.h5'
         # self.facenet_model_new = MobileNet()
-        model_path = './model_data/facenet_keras.h5'
+        model_path = './model_data/416-91.h5'
         self.facenet_model_new.load_weights(model_path,by_name = True)
         print("FaceNet权重加载完毕！！！")
 

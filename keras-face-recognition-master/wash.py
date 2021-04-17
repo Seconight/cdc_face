@@ -21,6 +21,7 @@ import os
 import threading
 import numpy as np
 from net.mtcnn import mtcnn
+from numpy.core.numeric import full
 import utils.utils as utils
 import time
 from models import MobileFaceNet
@@ -45,6 +46,7 @@ for root, ds, fs in os.walk(path):#获得文件夹下所有文件
             #读取文件
             fullname = os.path.join(root, f)#文件全名
             img=my_cv_imread(fullname)
+        
             img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
             rectangles = hhh.mtcnn_model.detectFace(img, hhh.threshold)
             if len(rectangles)!=1:
