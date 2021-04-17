@@ -7,6 +7,7 @@ import numpy as np
 from net.mtcnn import mtcnn
 import utils.utils as utils
 import time
+from PIL import Image
 from models import MobileFaceNet
 import glob
 import argparse
@@ -68,7 +69,7 @@ class face_rec():
         model_path = './model_data/facenet_keras.h5'
         # self.facenet_model_new = MobileNet()
         # model_path = './model_data/facenet_mobilenet.h5'
-        self.facenet_model_new.load_weights(model_path)
+        self.facenet_model_new.load_weights(model_path,by_name=True)
         print("FaceNet权重加载完毕！！！")
 
     #学生编码
@@ -87,13 +88,15 @@ class face_rec():
         embeddings = []
         flag=0
         faild_path=[]
+        i=0
         #编列文件列表进行人脸embedding
         for im_path in image_list:
             #调用piexif库的remove函数直接去除exif信息。
             piexif.remove(im_path)
             #读取图片文件
             img = cv2.imread(im_path)
-            print(im_path)
+            # # print(im_path)
+            # img=Image.open(im_path)
             #检测人脸
             img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
             #---------------------#
@@ -107,7 +110,7 @@ class face_rec():
             #---------------------#
             #   转化成正方形
             #---------------------#
-            rectangles = utils.rect2square(np.array(rectangles))
+            # rectangles = utils.rect2square(np.array(rectangles))
             #-----------------------------------------------#
             #   facenet要传入一个160x160的图片
             #   利用landmark对人脸进行矫正
@@ -116,6 +119,7 @@ class face_rec():
             landmark = np.reshape(rectangle[5:15], (5,2)) - np.array([int(rectangle[0]), int(rectangle[1])])
             crop_img = img[int(rectangle[1]):int(rectangle[3]), int(rectangle[0]):int(rectangle[2])]
             crop_img, _ = utils.Alignment_1(crop_img,landmark)
+            crop_img=utils.letterbox_image(crop_img,[160,160])
             crop_img = np.expand_dims(cv2.resize(crop_img, (160, 160)), 0)
 
             #--------------------------------------------------------------------#
@@ -125,7 +129,11 @@ class face_rec():
             
             new_face_encoding=[]
             new_face_encoding.append(face_encoding)
-            
+            # if i<10:
+            #     np.save("./userFace/%s/%s" %(studentId, studentId+'0'+str(i)), face_encoding)
+            # else:
+            #     np.save("./userFace/%s/%s" %(studentId, studentId+str(i)), face_encoding)
+            # i+=1
             embeddings.append(new_face_encoding)
         embedding = np.concatenate(embeddings, 0).mean(0).flatten()
         
@@ -188,10 +196,19 @@ class face_rec():
             return ""
         else:
             studentsList=students.split(',')
-        for p in studentsList:
-            if os.path.exists("./userFace/"+p+"/"+p+".npy"):
-                database_embeddings.update({p:np.load("./userFace/%s/%s.npy" %(p, p))})
-        #database_embeddings = {p:np.load("./userFace/%s/%s.npy" %(p, p)) for p in studentsList}
+        # for p in studentsList:
+        #     if os.path.exists("./userFace/"+p+"/"+p+".npy"):
+        #         # 找到所有npy文件
+        #         print('start load')
+        #         database_embeddings.update({p:np.load("./userFace/%s/%s.npy" %(p, p))})
+        #         print("./userFace/"+p+"/"+p+".npy")
+        #     for files in os.listdir("./userFace/"+p):
+        #         if files.endswith(".npy"):
+        #             database_embeddings.update({files.split('.')[0]:np.load("./userFace/"+p+'/'+files)})
+        #             newStudentsList.append(files.split('.')[0][:-2])
+        # for each in database_embeddings:
+        #     print(each)
+        database_embeddings = {p:np.load("./userFace/%s/%s.npy" %(p, p)) for p in studentsList}
         face_names = ''
         for root, ds, fs in os.walk(".\\attendance\\"+id):#获得文件夹下所有文件
             for f in fs:
@@ -234,31 +251,31 @@ class face_rec():
                 marigin = 16
 
                 for rectangle in rectangles:
-                    # bounding_boxes = {
-                    #         'box': [int(rectangle[0]), int(rectangle[1]),
-                    #                 int(rectangle[2]-rectangle[0]), int(rectangle[3]-rectangle[1])],
-                    #         'confidence': rectangle[4],
-                    #         'keypoints': {
-                    #                 'left_eye': (int(rectangle[5]), int(rectangle[6])),
-                    #                 'right_eye': (int(rectangle[7]), int(rectangle[8])),
-                    #                 'nose': (int(rectangle[9]), int(rectangle[10])),
-                    #                 'mouth_left': (int(rectangle[11]), int(rectangle[12])),
-                    #                 'mouth_right': (int(rectangle[13]), int(rectangle[14])),
-                    #         }
-                    # }
+                    bounding_boxes = {
+                            'box': [int(rectangle[0]), int(rectangle[1]),
+                                    int(rectangle[2]-rectangle[0]), int(rectangle[3]-rectangle[1])],
+                            'confidence': rectangle[4],
+                            'keypoints': {
+                                    'left_eye': (int(rectangle[5]), int(rectangle[6])),
+                                    'right_eye': (int(rectangle[7]), int(rectangle[8])),
+                                    'nose': (int(rectangle[9]), int(rectangle[10])),
+                                    'mouth_left': (int(rectangle[11]), int(rectangle[12])),
+                                    'mouth_right': (int(rectangle[13]), int(rectangle[14])),
+                            }
+                    }
 
-                    # bounding_box = bounding_boxes['box']
-                    # keypoints = bounding_boxes['keypoints']
+                    bounding_box = bounding_boxes['box']
+                    keypoints = bounding_boxes['keypoints']
 
                     # cv2.circle(org_image,(keypoints['left_eye']),   2, (255,0,0), 3)
                     # cv2.circle(org_image,(keypoints['right_eye']),  2, (255,0,0), 3)
                     # cv2.circle(org_image,(keypoints['nose']),       2, (255,0,0), 3)
                     # cv2.circle(org_image,(keypoints['mouth_left']), 2, (255,0,0), 3)
                     # cv2.circle(org_image,(keypoints['mouth_right']),2, (255,0,0), 3)
-                    # cv2.rectangle(org_image,
-                    #         (bounding_box[0], bounding_box[1]),
-                    #         (bounding_box[0]+bounding_box[2], bounding_box[1] + bounding_box[3]),
-                    #         (0,255,0), 2)
+                    cv2.rectangle(org_image,
+                            (bounding_box[0], bounding_box[1]),
+                            (bounding_box[0]+bounding_box[2], bounding_box[1] + bounding_box[3]),
+                            (0,255,0), 2)
                     # # align face and extract it out
                     # align_image = utils.align_face(draw_rgb, keypoints)
 
@@ -277,6 +294,7 @@ class face_rec():
                     #   利用人脸关键点进行人脸对齐
                     #-----------------------------------------------#
                     crop_img,_ = utils.Alignment_1(crop_img,landmark)
+                    crop_img=utils.letterbox_image(crop_img, [160,160])
                     crop_img = np.expand_dims(cv2.resize(crop_img, (160, 160)), 0)
                     t1 = time.time()
                     face_encoding = utils.calc_128_vec(self.facenet_model_new, crop_img)

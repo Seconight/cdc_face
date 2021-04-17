@@ -1,6 +1,7 @@
 import sys
 from operator import itemgetter
 import numpy as np
+from PIL import Image
 import cv2
 import math
 import os
@@ -303,25 +304,23 @@ def calc_128_vec(model,img):
     pre = np.reshape(pre,[128]) #将输入矩阵变为128行的矩阵
     return pre
 
+def letterbox_image(image, size):
+    image = Image.fromarray(image)
+    iw, ih = image.size
+    w, h = size
+    scale = min(w/iw, h/ih)
+    nw = int(iw*scale)
+    nh = int(ih*scale)
+    image = image.resize((nw,nh), Image.BICUBIC)
+    new_image = Image.new('RGB', size, (128,128,128))
+    new_image.paste(image, ((w-nw)//2, (h-nh)//2))
+    new_image = np.asarray(new_image)
+    return new_image
 
 #比较人脸
 def compare_faces(known_face_encodings, face_encoding_to_check, tolerance=1):
     dis = face_distance(known_face_encodings, face_encoding_to_check) 
     return list(dis <= tolerance)
-
-#reshape
-def letterbox_image(image, size):
-    ih, iw, _ = np.shape(image)
-    w, h = size
-    scale = min(w/iw, h/ih)
-    nw = int(iw*scale)
-    nh = int(ih*scale)
-
-    image = cv2.resize(image, (nw,nh))
-    new_image = np.ones([size[1],size[0],3])*128
-    new_image[(h-nh)//2:nh+(h-nh)//2, (w-nw)//2:nw+(w-nw)//2] = image
-    return new_image
-
 
 #更改图片尺寸
 def reshape_face(src_img):

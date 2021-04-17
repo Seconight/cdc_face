@@ -50,29 +50,38 @@ def my_cv_imread(filepath):
 def cv_imwrite(savePath,tem):
     cv2.imencode('.jpg',tem)[1].tofile(savePath)  # 保存图片
 #人脸裁减
-path='E:/BaiduNetdiskDownload/数据集/BingImage'
-hhh=face_rec()
-for root, ds, fs in os.walk(path):#获得文件夹下所有文件
-    for f in fs:
-            #读取文件
-            fullname = os.path.join(root, f)#文件全名
-            img=my_cv_imread(fullname)
-            img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
-            rectangles = hhh.mtcnn_model.detectFace(img, hhh.threshold)
-            if len(rectangles)!=1:
-                os.remove(fullname)
-                print(fullname+'delete')
-                continue
-            # else:
-            #     print(fullname)
-            #     rectangles = utils.rect2square(np.array(rectangles))
-            #     rectangle = rectangles[0]
-            #     landmark = np.reshape(rectangle[5:15], (5,2)) - np.array([int(rectangle[0]), int(rectangle[1])])
-            #     crop_img = img[int(rectangle[1]):int(rectangle[3]), int(rectangle[0]):int(rectangle[2])]
+# path='F:/系统默认/桌面/材料/班级/单个人脸'
+# hhh=face_rec()
+# for root, ds, fs in os.walk(path):#获得文件夹下所有文件
+#     for f in fs:
+#             #读取文件
+#             fullname = os.path.join(root, f)#文件全名
+#             img=my_cv_imread(fullname)
+#             img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+#             rectangles = hhh.mtcnn_model.detectFace(img, hhh.threshold)
+#             if len(rectangles)!=1:
+#                 # os.remove(fullname)
+#                 print(fullname+'delete')
+#                 continue
+#             else:
+#                 print(fullname)
+#                 rectangles = utils.rect2square(np.array(rectangles))
+#                 rectangle = rectangles[0]
+#                 landmark = np.reshape(rectangle[5:15], (5,2)) - np.array([int(rectangle[0]), int(rectangle[1])])
+#                 crop_img = img[int(rectangle[1]):int(rectangle[3]), int(rectangle[0]):int(rectangle[2])]
                 
-            #     # crop_img, _ = utils.Alignment_1(crop_img,landmark)
+#                 crop_img, _ = utils.Alignment_1(crop_img,landmark)
                 
-            #     crop_img=cv2.resize(crop_img, (160, 160))
-            #     crop_img=cv2.cvtColor(crop_img, cv2.COLOR_RGB2BGR)
-            #     cv_imwrite(fullname,crop_img)
+#                 crop_img=cv2.resize(crop_img, (160, 160))
+#                 crop_img=cv2.cvtColor(crop_img, cv2.COLOR_RGB2BGR)
+#                 cv_imwrite(fullname.replace('/单个人脸', '/裁减'),crop_img)
+                
+                # os.remove(fullname)
+# for root, ds, fs in os.walk('E:/360Downloads/计算机设计大赛/cdc_face/keras-face-recognition-master/userFace'):#获得文件夹下所有文件
+#     for f in fs:
+#         #读取文件
+#         fullname = os.path.join(root, f)#文件全名
+#         if fullname.endswith('.npy'):
+#             os.remove(fullname)
+
                 
